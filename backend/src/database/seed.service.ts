@@ -30,45 +30,12 @@ export class SeedService implements OnApplicationBootstrap {
   ) {}
 
   async onApplicationBootstrap() {
-    const existingClubs = await this.clubs.count();
-    if (existingClubs === 0) {
-      this.logger.log('Seeding database…');
-      await this.seed();
-      this.logger.log('Seeding complete.');
-      return;
-    }
-
-    // Backfill any missing seed data added in later iterations
-    const existingSquads   = await this.squads.count();
-    const existingPlayers  = await this.players.count();
-    const existingIdps     = await this.idps.count();
-    const existingPlans    = await this.sessionPlans.count();
-
-    if (existingSquads === 0 || existingPlayers === 0 || existingIdps === 0) {
-      this.logger.log('Incomplete seed data detected — dropping and reseeding. Restart the app once more if this recurs.');
-      // Clear everything so seed() can run cleanly (CASCADE handles FK ordering)
-      await this.clubs.query(
-        `TRUNCATE TABLE schedule_entries, session_plans, idp_progress_notes, idp_goals, idps, players, coach_assignments, squads, users, clubs CASCADE`,
-      );
-      await this.seed();
-      this.logger.log('Reseed complete.');
-      return;
-    }
-
-    if (existingPlans === 0) {
-      this.logger.log('Session plans missing — backfilling…');
-      await this.seedSessionPlans();
-      this.logger.log('Session plan backfill complete.');
-    }
-
-    const existingSchedule = await this.scheduleEntries.count();
-    if (existingSchedule === 0) {
-      this.logger.log('Schedule entries missing — backfilling…');
-      await this.seedSchedule();
-      this.logger.log('Schedule backfill complete.');
-    }
-
-    this.logger.log('Seed data already present — skipping.');
+    this.logger.log('Truncating all tables and reseeding…');
+    await this.clubs.query(
+      `TRUNCATE TABLE schedule_entries, session_plans, idp_progress_notes, idp_goals, idps, players, coach_assignments, squads, users, clubs CASCADE`,
+    );
+    await this.seed();
+    this.logger.log('Seeding complete.');
   }
 
   private async seed() {
