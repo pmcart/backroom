@@ -16,9 +16,10 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-  if (process.env.NODE_ENV !== 'production') {
-    app.enableCors({ origin: 'http://localhost:4200' });
-  }
+  const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',')
+    : ['http://localhost:4200'];
+  app.enableCors({ origin: allowedOrigins, credentials: true });
   app.setGlobalPrefix('api', { exclude: ['/'] });
 
   const port = process.env.PORT ?? 3000;
