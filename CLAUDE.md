@@ -82,7 +82,7 @@ This is the fully functional IDP module.
 ---
 
 ## Session Planning
-
+TEST
 
 - **Create** — fully functional, opens `PlanCreateForm`
 - **View / Edit** — clicking a plan opens `PlanDetailView` with full inline edit capability
