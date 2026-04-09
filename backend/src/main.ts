@@ -7,6 +7,10 @@ import { ensureDatabase } from './database/ensure-database';
 dotenv.config();
 
 async function bootstrap() {
+  console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
+  console.log(`PORT: ${process.env.PORT}`);
+  console.log(`DATABASE_URL present: ${!!process.env.DATABASE_URL}`);
+
   await ensureDatabase();
 
   const app = await NestFactory.create(AppModule);
@@ -18,8 +22,8 @@ async function bootstrap() {
   app.setGlobalPrefix('api', { exclude: ['/'] });
 
   const port = process.env.PORT ?? 3000;
-  await app.listen(port);
-  console.log(`API running on http://localhost:${port}/api`);
+  await app.listen(port, '0.0.0.0');
+  console.log(`API running on port ${port}`);
 }
 bootstrap().catch((err) => {
   console.error('Fatal startup error:', err);

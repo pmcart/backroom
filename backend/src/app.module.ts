@@ -1,3 +1,4 @@
+import { existsSync } from 'fs';
 import { join } from 'path';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -25,10 +26,9 @@ import { UsersModule } from './users/users.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'public'),
-      exclude: ['/api/(.*)'],
-    }),
+    ...(existsSync(join(__dirname, '..', 'public'))
+      ? [ServeStaticModule.forRoot({ rootPath: join(__dirname, '..', 'public'), exclude: ['/api/(.*)'] })]
+      : []),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
