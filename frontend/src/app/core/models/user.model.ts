@@ -7,6 +7,7 @@ export interface User {
   lastName: string;
   role: Role;
   clubId: string | null;
+  clubName: string | null;
 }
 
 export interface AuthResponse {

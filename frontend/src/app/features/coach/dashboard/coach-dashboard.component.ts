@@ -31,13 +31,13 @@ import { AuthService } from '../../../core/auth/auth.service';
     <div class="row g-3">
       <div class="col-lg-7">
         <div class="card border-0 shadow-sm">
-          <div class="card-header bg-white fw-semibold border-bottom-0 pt-3">Upcoming Sessions</div>
+          <div class="card-header fw-semibold border-bottom-0 pt-3">Upcoming Sessions</div>
           <div class="card-body text-muted small">Session schedule will appear here.</div>
         </div>
       </div>
       <div class="col-lg-5">
         <div class="card border-0 shadow-sm">
-          <div class="card-header bg-white fw-semibold border-bottom-0 pt-3">Wellness Alerts</div>
+          <div class="card-header fw-semibold border-bottom-0 pt-3">Wellness Alerts</div>
           <div class="card-body text-muted small">No flagged players today.</div>
         </div>
       </div>

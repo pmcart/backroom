@@ -1,0 +1,15 @@
+.nav-link {
+  cursor: pointer;
+}
+
+.table th {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+}
+
+.card-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}

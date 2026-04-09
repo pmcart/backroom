@@ -1,0 +1,347 @@
+@if (loading()) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
+  </div>
+} @else if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+} @else if (squad()) {
+
+  <!-- Back + Header -->
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <button class="btn btn-outline-secondary btn-sm" (click)="goBack()">&#8592; Back</button>
+    <div>
+      <h4 class="mb-0 fw-semibold">{{ squad()!.name }}</h4>
+      <span class="badge bg-secondary">{{ squad()!.ageGroup }}</span>
+    </div>
+  </div>
+
+  <!-- Stats bar -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card text-center border-0 shadow-sm">
+        <div class="card-body py-3">
+          <div class="fs-4 fw-bold text-success">{{ activeCount() }}</div>
+          <small class="text-muted">Active</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-center border-0 shadow-sm">
+        <div class="card-body py-3">
+          <div class="fs-4 fw-bold text-danger">{{ injuredCount() }}</div>
+          <small class="text-muted">Injured</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-center border-0 shadow-sm">
+        <div class="card-body py-3">
+          <div class="fs-4 fw-bold text-warning">{{ recoveryCount() }}</div>
+          <small class="text-muted">Recovery</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-center border-0 shadow-sm">
+        <div class="card-body py-3">
+          <div class="fs-4 fw-bold text-primary">{{ squad()!.coachAssignments.length }}</div>
+          <small class="text-muted">Staff</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import feedback -->
+  @if (importSuccess) {
+    <div class="alert alert-success alert-dismissible">
+      {{ importSuccess }}
+      <button type="button" class="btn-close" (click)="importSuccess = null"></button>
+    </div>
+  }
+  @if (importError) {
+    <div class="alert alert-danger alert-dismissible">
+      {{ importError }}
+      <button type="button" class="btn-close" (click)="importError = null"></button>
+    </div>
+  }
+
+  <!-- Coaching staff card -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h6 class="mb-0 fw-semibold">Coaching Staff ({{ squad()!.coachAssignments.length }})</h6>
+
+      @if (isAdmin) {
+        <!-- Coach split-button dropdown -->
+        <div class="position-relative" (click)="$event.stopPropagation()">
+          <button class="btn btn-primary btn-sm" (click)="toggleCoachDropdown($event)">
+            + Add Coach &#9660;
+          </button>
+          @if (showCoachDropdown()) {
+            <ul class="dropdown-menu show position-absolute end-0" style="top: 100%; z-index: 1050; min-width: 180px;">
+              <li>
+                <button class="dropdown-item" (click)="openAssignCoachModal()">
+                  Assign Existing Coach
+                </button>
+              </li>
+              <li>
+                <button class="dropdown-item" (click)="openCreateCoachModal()">
+                  Create New Coach
+                </button>
+              </li>
+            </ul>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="card-body">
+      @if (squad()!.coachAssignments.length === 0) {
+        <p class="text-muted fst-italic mb-0 small">No coaching staff assigned yet.</p>
+      } @else {
+        <div class="d-flex flex-wrap gap-2">
+          @for (ca of squad()!.coachAssignments; track ca.id) {
+            <span class="badge bg-dark d-inline-flex align-items-center gap-1 py-2 px-3">
+              {{ ca.user?.firstName }} {{ ca.user?.lastName }}
+              @if (isAdmin) {
+                <button
+                  type="button"
+                  class="btn-close btn-close-white"
+                  style="font-size: 0.55rem;"
+                  (click)="removeCoach(ca.id, (ca.user?.firstName ?? '') + ' ' + (ca.user?.lastName ?? ''))"
+                  aria-label="Remove"
+                ></button>
+              }
+            </span>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Player table card -->
+  <div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h6 class="mb-0 fw-semibold">Players ({{ squad()!.players.length }})</h6>
+      <div class="d-flex gap-2">
+        <!-- CSV import -->
+        <label class="btn btn-outline-secondary btn-sm mb-0" title="Import CSV — columns: firstName,lastName,dateOfBirth,position">
+          Import CSV
+          <input type="file" accept=".csv" class="visually-hidden" (change)="onFileChange($event)" />
+        </label>
+
+        <!-- Player split-button dropdown -->
+        <div class="position-relative" (click)="$event.stopPropagation()">
+          <button class="btn btn-primary btn-sm" (click)="togglePlayerDropdown($event)">
+            + Add Player &#9660;
+          </button>
+          @if (showPlayerDropdown()) {
+            <ul class="dropdown-menu show position-absolute end-0" style="top: 100%; z-index: 1050; min-width: 180px;">
+              <li>
+                <button class="dropdown-item" (click)="openCreatePlayerModal()">
+                  Create New Player
+                </button>
+              </li>
+              <li>
+                <button class="dropdown-item" (click)="openAddExistingPlayerModal()">
+                  Add Existing Player
+                </button>
+              </li>
+            </ul>
+          }
+        </div>
+      </div>
+    </div>
+
+    @if (squad()!.players.length === 0) {
+      <div class="card-body text-center py-5 text-muted">
+        <p class="mb-2">No players in this squad yet.</p>
+        <button class="btn btn-outline-primary btn-sm" (click)="openCreatePlayerModal()">Add the first player</button>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Name</th>
+              <th>Position</th>
+              <th>Date of Birth</th>
+              <th>Status</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (player of squad()!.players; track player.id) {
+              <tr>
+                <td class="fw-semibold">{{ player.firstName }} {{ player.lastName }}</td>
+                <td class="text-muted">{{ player.position || '—' }}</td>
+                <td class="text-muted">{{ formatDate(player.dateOfBirth) }}</td>
+                <td><span class="badge {{ statusBadgeClass(player.status) }}">{{ player.status | titlecase }}</span></td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-outline-danger" (click)="removePlayer(player)">Remove</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+}
+
+<!-- ═══ Modals ═══════════════════════════════════════════════════════════════ -->
+
+<!-- Create New Player -->
+@if (showCreatePlayerModal()) { <div class="modal-backdrop fade show"></div> }
+<div class="modal fade" [class.show]="showCreatePlayerModal()" [style.display]="showCreatePlayerModal() ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Create New Player</h5>
+        <button type="button" class="btn-close" (click)="closeCreatePlayerModal()"></button>
+      </div>
+      <div class="modal-body">
+        @if (playerError) { <div class="alert alert-danger py-2 small">{{ playerError }}</div> }
+        <div class="row g-3">
+          <div class="col-6">
+            <label class="form-label fw-semibold">First Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="newPlayer.firstName" placeholder="Aaron" />
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-semibold">Last Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="newPlayer.lastName" placeholder="Connolly" />
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-semibold">Position</label>
+            <input type="text" class="form-control" [(ngModel)]="newPlayer.position" placeholder="Forward" />
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-semibold">Date of Birth</label>
+            <input type="date" class="form-control" [(ngModel)]="newPlayer.dateOfBirth" />
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Status</label>
+            <select class="form-select" [(ngModel)]="newPlayer.status">
+              <option value="active">Active</option>
+              <option value="injured">Injured</option>
+              <option value="recovery">Recovery</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeCreatePlayerModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="createPlayer()" [disabled]="savingPlayer || !newPlayer.firstName.trim() || !newPlayer.lastName.trim()">
+          {{ savingPlayer ? 'Adding...' : 'Add Player' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Existing Player -->
+@if (showAddExistingPlayerModal()) { <div class="modal-backdrop fade show"></div> }
+<div class="modal fade" [class.show]="showAddExistingPlayerModal()" [style.display]="showAddExistingPlayerModal() ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add Existing Player</h5>
+        <button type="button" class="btn-close" (click)="closeAddExistingPlayerModal()"></button>
+      </div>
+      <div class="modal-body">
+        @if (assignPlayerError) { <div class="alert alert-danger py-2 small">{{ assignPlayerError }}</div> }
+        @if (loadingAvailablePlayers()) {
+          <div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></div>
+        } @else if (availablePlayers().length === 0) {
+          <p class="text-muted text-center mb-0">No other club players available to assign.</p>
+        } @else {
+          <p class="text-muted small mb-3">Select a player from another squad in your club to move them here.</p>
+          <select class="form-select" [(ngModel)]="selectedPlayerId" size="8" style="overflow-y: auto;">
+            @for (p of availablePlayers(); track p.id) {
+              <option [value]="p.id">
+                {{ p.firstName }} {{ p.lastName }}{{ p.position ? ' — ' + p.position : '' }}
+              </option>
+            }
+          </select>
+        }
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAddExistingPlayerModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="assignPlayer()" [disabled]="assigningPlayer || !selectedPlayerId">
+          {{ assigningPlayer ? 'Moving...' : 'Move to This Squad' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Assign Existing Coach -->
+@if (showAssignCoachModal()) { <div class="modal-backdrop fade show"></div> }
+<div class="modal fade" [class.show]="showAssignCoachModal()" [style.display]="showAssignCoachModal() ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Assign Existing Coach</h5>
+        <button type="button" class="btn-close" (click)="closeAssignCoachModal()"></button>
+      </div>
+      <div class="modal-body">
+        @if (assignCoachError) { <div class="alert alert-danger py-2 small">{{ assignCoachError }}</div> }
+        @if (loadingAvailableCoaches()) {
+          <div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></div>
+        } @else if (availableCoaches().length === 0) {
+          <p class="text-muted text-center mb-0">No unassigned coaches available in this club.</p>
+        } @else {
+          <p class="text-muted small mb-3">Select a coach from your club to assign to this squad.</p>
+          <select class="form-select" [(ngModel)]="selectedCoachId" size="6" style="overflow-y: auto;">
+            @for (c of availableCoaches(); track c.id) {
+              <option [value]="c.id">{{ c.firstName }} {{ c.lastName }}</option>
+            }
+          </select>
+        }
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAssignCoachModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="assignCoach()" [disabled]="assigningCoach || !selectedCoachId">
+          {{ assigningCoach ? 'Assigning...' : 'Assign Coach' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create New Coach -->
+@if (showCreateCoachModal()) { <div class="modal-backdrop fade show"></div> }
+<div class="modal fade" [class.show]="showCreateCoachModal()" [style.display]="showCreateCoachModal() ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Create New Coach</h5>
+        <button type="button" class="btn-close" (click)="closeCreateCoachModal()"></button>
+      </div>
+      <div class="modal-body">
+        @if (coachError) { <div class="alert alert-danger py-2 small">{{ coachError }}</div> }
+        <p class="text-muted small mb-3">A new coach account will be created with a temporary password of <strong>Password1</strong>.</p>
+        <div class="row g-3">
+          <div class="col-6">
+            <label class="form-label fw-semibold">First Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="newCoach.firstName" placeholder="Tommy" />
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-semibold">Last Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="newCoach.lastName" placeholder="Davis" />
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+            <input type="email" class="form-control" [(ngModel)]="newCoach.email" placeholder="coach@club.com" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeCreateCoachModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="createCoach()"
+          [disabled]="savingCoach || !newCoach.firstName.trim() || !newCoach.lastName.trim() || !newCoach.email.trim()">
+          {{ savingCoach ? 'Creating...' : 'Create & Assign' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

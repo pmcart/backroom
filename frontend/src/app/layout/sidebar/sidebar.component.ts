@@ -15,7 +15,15 @@ interface NavItem {
   template: `
     <nav class="sidebar d-flex flex-column">
       <div class="sidebar-brand">
-        <span>&#9918; Backroom</span>
+        @if (clubName()) {
+          <div class="club-logo-badge" [style.background]="clubColor()">{{ clubInitials() }}</div>
+          <div class="club-brand-text">
+            <div class="club-brand-name">{{ clubName() }}</div>
+            <div class="club-brand-sub">{{ clubName() }} Academy</div>
+          </div>
+        } @else {
+          <span class="club-brand-name">Backroom</span>
+        }
       </div>
 
       <div class="flex-grow-1 py-2">
@@ -53,6 +61,22 @@ interface NavItem {
 export class SidebarComponent {
   auth = inject(AuthService);
 
+  clubName = computed(() => this.auth.currentUser()?.clubName ?? null);
+
+  clubInitials = computed(() => {
+    const name = this.clubName();
+    if (!name) return '';
+    return name.split(' ').filter(w => w).map(w => w[0]).join('');
+  });
+
+  clubColor = computed(() => {
+    const name = this.clubName() ?? '';
+    const palette = ['#c0392b', '#2980b9', '#27ae60', '#8e44ad', '#d35400', '#16a085'];
+    let hash = 0;
+    for (const c of name) hash = (hash * 31 + c.charCodeAt(0)) & 0xffff;
+    return palette[hash % palette.length];
+  });
+
   fullName = computed(() => {
     const u = this.auth.currentUser();
     return u ? `${u.firstName} ${u.lastName}` : '';
@@ -84,9 +108,10 @@ const ADMIN_NAV: NavItem[] = [
   { label: 'Dashboard', icon: 'bi-speedometer2', route: '/admin/dashboard' },
   { label: 'Squads', icon: 'bi-people-fill', route: '/admin/squads' },
   { label: 'IDP Management', icon: 'bi-person-lines-fill', route: '/admin/idp' },
-  { label: 'Planning Overview', icon: 'bi-calendar3', route: '/admin/planning' },
+  { label: 'Weekly Schedule', icon: 'bi-calendar3', route: '/admin/planning' },
   { label: 'Monitoring', icon: 'bi-heart-pulse-fill', route: '/admin/monitoring' },
   { label: 'Education Hub', icon: 'bi-mortarboard-fill', route: '/admin/education' },
+  { label: 'Club Methodology', icon: 'bi-book-half', route: '/admin/methodology' },
   { label: 'Settings', icon: 'bi-gear-fill', route: '/admin/settings' },
 ];
 
@@ -97,6 +122,7 @@ const COACH_NAV: NavItem[] = [
   { label: 'IDP', icon: 'bi-person-lines-fill', route: '/coach/idp' },
   { label: 'Wellness', icon: 'bi-heart-pulse-fill', route: '/coach/wellness' },
   { label: 'Education', icon: 'bi-mortarboard-fill', route: '/coach/education' },
+  { label: 'Club Methodology', icon: 'bi-book-half', route: '/coach/methodology' },
 ];
 
 const PLAYER_NAV: NavItem[] = [

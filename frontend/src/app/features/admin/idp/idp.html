@@ -1,1 +1,253 @@
-<p>idp works!</p>
+<!-- Page header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="mb-1 fw-semibold">IDP Management</h4>
+    <p class="text-muted mb-0 small">Monitor individual development plans across all squads</p>
+  </div>
+</div>
+
+<!-- Loading / error -->
+@if (loading()) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
+    <p class="mt-3 text-muted">Loading IDPs...</p>
+  </div>
+} @else if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+} @else {
+
+  <!-- Stats row -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md">
+      <div class="card border-0 shadow-sm text-center">
+        <div class="card-body py-3">
+          <div class="fs-4 fw-bold text-primary">{{ totalIdps() }}</div>
+          <small class="text-muted">Total IDPs</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md">
+      <div class="card border-0 shadow-sm text-center">
+        <div class="card-body py-3">
+          <div class="fs-4 fw-bold text-success">{{ onTrackCount() }}</div>
+          <small class="text-muted">On Track</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md">
+      <div class="card border-0 shadow-sm text-center">
+        <div class="card-body py-3">
+          <div class="fs-4 fw-bold text-danger">{{ atRiskCount() }}</div>
+          <small class="text-muted">At Risk</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md">
+      <div class="card border-0 shadow-sm text-center">
+        <div class="card-body py-3">
+          <div class="fs-4 fw-bold text-warning">{{ reviewsDue() }}</div>
+          <small class="text-muted">Reviews Due</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md">
+      <div class="card border-0 shadow-sm text-center">
+        <div class="card-body py-3">
+          <div class="fs-4 fw-bold" [class]="progressTextClass(avgProgress())">{{ avgProgress() }}%</div>
+          <small class="text-muted">Avg Progress</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search + filter (only on By Squad tab) -->
+  @if (activeTab() === 'by-squad') {
+    <div class="row g-3 mb-4">
+      <div class="col-md-5">
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search by player name..."
+          [value]="searchTerm()"
+          (input)="searchTerm.set($any($event.target).value)"
+        />
+      </div>
+      <div class="col-md-4">
+        <select
+          class="form-select"
+          [value]="squadFilter()"
+          (change)="squadFilter.set($any($event.target).value)"
+        >
+          <option value="">All Squads</option>
+          @for (s of squads(); track s.id) {
+            <option [value]="s.id">{{ s.name }}</option>
+          }
+        </select>
+      </div>
+      @if (searchTerm() || squadFilter()) {
+        <div class="col-auto d-flex align-items-center">
+          <button class="btn btn-outline-secondary btn-sm" (click)="searchTerm.set(''); squadFilter.set('')">
+            Clear
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab() === 'by-squad'" (click)="activeTab.set('by-squad')">
+        By Squad
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab() === 'engagement'" (click)="activeTab.set('engagement')">
+        Engagement Overview
+      </button>
+    </li>
+  </ul>
+
+  <!-- ═══ Tab: By Squad ════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'by-squad') {
+    @if (filtered().length === 0) {
+      <div class="text-center py-5 text-muted">No IDPs match your current filters.</div>
+    } @else {
+      @for (group of bySquad(); track group.squad.id) {
+        <div class="card shadow-sm mb-4">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="mb-0 fw-semibold">{{ group.squad.name }}</h6>
+              <small class="text-muted">{{ group.squad.ageGroup }}</small>
+            </div>
+            <span class="badge bg-secondary">{{ group.idps.length }} IDPs</span>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Player</th>
+                  <th>Position</th>
+                  <th>Mode</th>
+                  <th>Status</th>
+                  <th>Review Date</th>
+                  <th>Goals</th>
+                  <th>Progress</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (idp of group.idps; track idp.id) {
+                  <tr>
+                    <td class="fw-semibold">{{ idp.player?.firstName }} {{ idp.player?.lastName }}</td>
+                    <td class="text-muted small">{{ idp.player?.position || '—' }}</td>
+                    <td>
+                      <span class="badge" [class]="idp.mode === 'elite' ? 'bg-primary' : 'bg-secondary'">
+                        {{ idp.mode === 'elite' ? 'Elite' : 'Standard' }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge {{ statusBadgeClass(idp.status) }}">{{ statusLabel(idp.status) }}</span>
+                    </td>
+                    <td class="text-muted small">{{ idp.reviewDate ?? '—' }}</td>
+                    <td class="text-muted small">{{ idp.goals.length }}</td>
+                    <td style="min-width: 140px;">
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="progress flex-grow-1" style="height: 8px;">
+                          <div
+                            class="progress-bar {{ progressClass(idp.progress) }}"
+                            role="progressbar"
+                            [style.width.%]="idp.progress"
+                          ></div>
+                        </div>
+                        <small class="fw-semibold {{ progressTextClass(idp.progress) }}" style="min-width: 32px;">
+                          {{ idp.progress }}%
+                        </small>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+    }
+  }
+
+  <!-- ═══ Tab: Engagement Overview ════════════════════════════════════════ -->
+  @if (activeTab() === 'engagement') {
+    <div class="row g-4">
+
+      <!-- Squad averages -->
+      <div class="col-lg-7">
+        <div class="card shadow-sm h-100">
+          <div class="card-header">
+            <h6 class="mb-0 fw-semibold">Squad Averages</h6>
+          </div>
+          <div class="card-body">
+            @if (squadAverages().length === 0) {
+              <p class="text-muted text-center py-3 mb-0">No data available.</p>
+            } @else {
+              @for (row of squadAverages(); track row.squad.id) {
+                <div class="mb-4">
+                  <div class="d-flex justify-content-between align-items-end mb-1">
+                    <span class="fw-semibold small">{{ row.squad.name }}</span>
+                    <span class="small {{ progressTextClass(row.avg) }} fw-bold">{{ row.avg }}%</span>
+                  </div>
+                  <div class="progress mb-2" style="height: 10px;">
+                    <div
+                      class="progress-bar {{ progressClass(row.avg) }}"
+                      role="progressbar"
+                      [style.width.%]="row.avg"
+                    ></div>
+                  </div>
+                  <div class="d-flex gap-3">
+                    <small class="text-muted">{{ row.total }} IDPs</small>
+                    <small class="text-success">&#10003; {{ row.onTrack }} on track</small>
+                    @if (row.atRisk > 0) {
+                      <small class="text-danger">&#9888; {{ row.atRisk }} at risk</small>
+                    }
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Players needing attention -->
+      <div class="col-lg-5">
+        <div class="card shadow-sm h-100">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 fw-semibold">Players Needing Attention</h6>
+            <span class="badge bg-danger">{{ needingAttention().length }}</span>
+          </div>
+          <div class="card-body p-0">
+            @if (needingAttention().length === 0) {
+              <p class="text-muted text-center py-4 mb-0">All players are on track.</p>
+            } @else {
+              <ul class="list-group list-group-flush">
+                @for (idp of needingAttention(); track idp.id) {
+                  <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                    <div>
+                      <div class="fw-semibold small">{{ idp.player?.firstName }} {{ idp.player?.lastName }}</div>
+                      <small class="text-muted">{{ idp.squad?.name }}</small>
+                      @if (idp.status === 'review-due') {
+                        <span class="badge bg-warning text-dark ms-1" style="font-size:0.65rem;">Review Due</span>
+                      }
+                    </div>
+                    <span class="badge {{ progressClass(idp.progress) }} rounded-pill">
+                      {{ idp.progress }}%
+                    </span>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        </div>
+      </div>
+
+    </div>
+  }
+
+}

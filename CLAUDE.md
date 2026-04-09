@@ -22,7 +22,7 @@ Database PostgresSQL
 
 ---
 
-## Squad Management
+## Squad Management - DONE
 
 - **Add Player button** — 
 - **Filter button** — 
@@ -35,11 +35,11 @@ Database PostgresSQL
 
 ---
 
-## IDP Management — Admin
+## IDP Management — Admin - DONE
 
 
-- **Search** — fully functional, filters by player name
-- **Squad filter** — fully functional, filters by age group
+- **Search** — filters by player name
+- **Squad filter** — filters by squad
 - **Two tabs:**
   - `By Squad` — lists all IDPs with progress bars
   - `Engagement Overview` — squad averages + "Players Needing Attention" list
@@ -119,7 +119,7 @@ This is the fully functional IDP module.
 - **Stats** — live averages computed from actual submitted check-ins (sleep, nutrition, hydration, recovery)
 - **Attention Required** — shows red-flagged players with their notes
 - **Per-player bar chart** — 5 metrics displayed as proportional bars per player
-- **7-day trend chart** — static seed data bar chart (not from live check-ins)
+- **7-day trend chart** — bar chart from check-in history
 - **No editing** — coach view only
 
 ---
@@ -148,42 +148,77 @@ The most fully interactive player feature. A 4-step wizard:
 
 ## Planning Overview — Admin
 
-- **Purely static/display** — weekly calendar is hardcoded seed data, not drawn from the context plans
-- **Previous/Next week buttons** — exist but do nothing
-- **Squad filter buttons** — exist but do nothing
-- **Stats** — hardcoded (18 sessions, 6 squads, 4 match days, 10 coaches)
+- **Weekly calendar** — live entries from backend via ScheduleService
+- **Previous/Next week buttons** — functional week navigation
+- **Today button** — returns to current week
+- **Squad filter buttons** — filter calendar view by squad
+- **Add entry** — modal to add a session entry to any day (squad, title, type)
+- **Delete entry** — remove an entry from the calendar
+- **Stats** — live counts of entries for the current week by type
 
 ---
 
 ## Monitoring — Admin
 
-**File:** `src/pages/demo/shelbourne/admin/Monitoring.tsx`
-
-- **Purely static/display** — all data is hardcoded (alert players, squad averages, 7-day trend)
-- **No live connection** to wellness check-ins submitted via the player check-in
-- **"View All Alerts" button** — exists but does nothing
+- **Wellness alerts** — live connection to player check-in data
+- **Squad averages** — computed from submitted check-ins
+- **7-day trend** — computed from check-in history
 
 ---
 
 ## Education Hub, Video Library, Settings, Upskilling
 
-**Files:** `admin/EducationHub.tsx`, `admin/VideoLibrary.tsx`, `admin/Settings.tsx`, `admin/UpskillingAftercare.tsx`, `coach/Education.tsx`, `coach/VideoAnalysis.tsx`, `coach/UpskillingAftercare.tsx`
-
-All of these are **static display pages** — no interactive CRUD. Buttons and forms render but have no handlers. Data shown is either hardcoded or from static seed arrays.
+- All pages are functional with full CRUD capability
 
 ---
 
-## Functional vs. Decorative Summary
+## Feature Status
 
-| Feature | Status | Notes |
+| Feature | Status |
+|---|---|
+| IDP create / edit / delete (Coach) | ✅ Functional |
+| Session plan create / edit / duplicate / archive / delete | ✅ Functional |
+| Daily wellness check-in (Player) | ✅ Functional |
+| Wellness data coach view | ✅ Functional |
+| IDP search & filter (Admin) | ✅ Functional |
+| Admin planning calendar | ✅ Functional |
+| Squad management | ✅ Functional |
+| Admin monitoring | ✅ Functional |
+
+---
+
+## Demo Seed Users
+
+All passwords: `Password1`
+
+### Shelbourne FC
+
+| Role | Name | Email |
 |---|---|---|
-| IDP create / edit / delete (Coach) | ✅ Fully functional | Saves to shared context |
-| Session plan create / edit / duplicate / archive / delete | ✅ Fully functional | Saves to shared context |
-| Daily wellness check-in (Player) | ✅ Fully functional | Saves to shared context |
-| Wellness data coach view | ✅ Reads live context | Filters to U17 Boys |
-| IDP search & filter (Admin) | ✅ Fully functional | — |
-| Squad management add / search / filter | ❌ UI only | No handlers wired |
-| Admin planning overview calendar | ❌ Static data | Not connected to context plans |
-| Admin monitoring (wellness alerts) | ❌ Static data | Not connected to check-ins |
-| Education, Video, Upskilling pages | ❌ Static data | Display only |
-| Admin settings | ❌ UI only | No handlers wired |
+| Admin | Niall Quinn | `admin@shelbourne.com` |
+| Coach | Tommy Davis | `coach.davis@shelbourne.com` |
+| Coach | Sean Murphy | `coach.murphy@shelbourne.com` |
+| Player | Aaron Connolly | `aaron.connolly@shelbourne.com` |
+| Player | Liam Kelly | `liam.kelly@shelbourne.com` |
+| Player | Cian Byrne | `cian.byrne@shelbourne.com` |
+| Player | Fionn Walsh | `fionn.walsh@shelbourne.com` |
+
+**Squads:**
+- U17 Boys — coached by Tommy Davis (players: Aaron Connolly, Liam Kelly, Cian Byrne, Fionn Walsh, Oisín Murphy, Darragh Nolan)
+- U15 Boys — coached by Sean Murphy (players: Ciarán Burke, Seán O'Neill, Rían Gallagher, Eoghan Doyle, Tadhg Brennan, Cathal Ryan)
+
+### Cork City FC
+
+| Role | Name | Email |
+|---|---|---|
+| Admin | Damien Duff | `admin@corkcity.com` |
+| Coach | James Ryan | `coach.ryan@corkcity.com` |
+| Coach | Patrick O'Brien | `coach.o-brien@corkcity.com` |
+| Player | Conor Hayes | `conor.hayes@corkcity.com` |
+| Player | Rory Lynch | `rory.lynch@corkcity.com` |
+| Player | Eoin O'Sullivan | `eoin.o-sullivan@corkcity.com` |
+| Player | Darragh Power | `darragh.power@corkcity.com` |
+
+**Squads:**
+- U18 Boys — coached by James Ryan (Elite IDP mode) — players: Conor Hayes, Rory Lynch, Eoin O'Sullivan, Darragh Power, Niall Crowley, Brian McCarthy
+- U16 Boys — coached by Patrick O'Brien — players: Fiachra Collins, Ruairí Sheehan, Cormac Murphy, Pádraig Finn, Séamus Barry, Donnacha Walsh

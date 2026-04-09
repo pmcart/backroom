@@ -1,0 +1,952 @@
+// ── Shared tokens ─────────────────────────────────────────────────────────────
+
+$accent:       #e53e3e;
+$accent-hover: #c53030;
+$border:       rgba(255, 255, 255, 0.08);
+$card-bg:      #1e293b;
+$card-bg-alt:  #162033;
+$muted:        rgba(255, 255, 255, 0.45);
+$text:         rgba(255, 255, 255, 0.87);
+$radius:       8px;
+
+// ── Page wrapper ──────────────────────────────────────────────────────────────
+
+.sp-page,
+.sp-form-page,
+.sp-detail-page {
+  min-height: calc(100vh - 130px);
+  padding-bottom: 48px;
+}
+
+// ── Page Header ───────────────────────────────────────────────────────────────
+
+.sp-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.sp-page-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: $text;
+}
+
+.sp-page-subtitle {
+  font-size: 0.85rem;
+  color: $muted;
+  margin: 0;
+}
+
+// ── Info Banner ───────────────────────────────────────────────────────────────
+
+.sp-info-banner {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  background: linear-gradient(135deg, rgba($accent, 0.08), rgba(darken($accent, 10%), 0.12));
+  border: 1px solid rgba($accent, 0.2);
+  border-left: 3px solid $accent;
+  border-radius: $radius;
+  padding: 14px 18px;
+  margin-bottom: 24px;
+}
+
+.sp-info-banner-icon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.sp-info-banner-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: $text;
+  margin-bottom: 4px;
+}
+
+.sp-info-banner-text {
+  font-size: 0.8rem;
+  color: $muted;
+  margin: 0;
+  line-height: 1.5;
+}
+
+// ── Stats Grid ────────────────────────────────────────────────────────────────
+
+.sp-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+
+  @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); }
+}
+
+.sp-stat-card {
+  background: $card-bg;
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.sp-stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+
+  &.sp-icon-red    { background: rgba($accent, 0.15); }
+  &.sp-icon-blue   { background: rgba(59, 130, 246, 0.15); }
+  &.sp-icon-purple { background: rgba(139, 92, 246, 0.15); }
+  &.sp-icon-green  { background: rgba(34, 197, 94, 0.15); }
+}
+
+.sp-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: $text;
+}
+
+.sp-stat-label {
+  font-size: 0.75rem;
+  color: $muted;
+  margin-top: 2px;
+}
+
+// ── Filters Row ───────────────────────────────────────────────────────────────
+
+.sp-filters-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.sp-filter-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sp-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.sp-search-icon {
+  position: absolute;
+  left: 10px;
+  font-size: 0.85rem;
+  pointer-events: none;
+  color: $muted;
+}
+
+.sp-search-input {
+  background: $card-bg;
+  border: 1px solid $border;
+  border-radius: 6px;
+  color: $text;
+  padding: 6px 10px 6px 30px;
+  font-size: 0.82rem;
+  width: 200px;
+  outline: none;
+  transition: border-color 0.15s;
+
+  &::placeholder { color: $muted; }
+  &:focus { border-color: rgba($accent, 0.5); }
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+
+.sp-tabs {
+  display: flex;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.sp-tab {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: $muted;
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 5px 14px;
+  transition: all 0.15s;
+
+  &:hover { color: $text; background: rgba(255,255,255,0.06); }
+
+  &.sp-tab-active {
+    background: $card-bg;
+    color: $text;
+    font-weight: 600;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+}
+
+// ── Plan Cards ────────────────────────────────────────────────────────────────
+
+.sp-plans-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sp-empty-state {
+  text-align: center;
+  color: $muted;
+  font-size: 0.85rem;
+  padding: 40px 0;
+}
+
+.sp-plan-card {
+  background: $card-bg;
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+
+  &:hover {
+    border-color: rgba($accent, 0.35);
+    background: rgba($accent, 0.03);
+  }
+}
+
+.sp-plan-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.sp-plan-badges {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.sp-plan-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.15s;
+
+  .sp-plan-card:hover & { opacity: 1; }
+}
+
+.sp-plan-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: $text;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sp-plan-meta {
+  font-size: 0.75rem;
+  color: $muted;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sp-meta-dot { opacity: 0.4; }
+
+// ── Badges ────────────────────────────────────────────────────────────────────
+
+.sp-type-badge,
+.sp-status-badge {
+  display: inline-block;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  letter-spacing: 0.03em;
+  text-transform: capitalize;
+}
+
+.sp-type-single-session   { background: rgba($accent, 0.2);         color: lighten($accent, 20%); }
+.sp-type-weekly-plan      { background: rgba(59,130,246,0.2);        color: #93c5fd; }
+.sp-type-multi-week-block { background: rgba(139,92,246,0.2);        color: #c4b5fd; }
+.sp-type-season-plan      { background: rgba(245,158,11,0.2);        color: #fcd34d; }
+
+.sp-status-active   { background: rgba(34,197,94,0.15);  color: #86efac; }
+.sp-status-draft    { background: rgba(245,158,11,0.15); color: #fcd34d; }
+.sp-status-archived { background: rgba(100,116,139,0.2); color: #94a3b8; }
+
+.sp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  font-weight: 500;
+
+  &.sp-badge-blue      { background: rgba(59,130,246,0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+  &.sp-badge-secondary { background: rgba(100,116,139,0.2); color: #94a3b8; }
+  &.sp-badge-sm        { font-size: 0.67rem; padding: 1px 6px; }
+}
+
+.sp-badge-remove {
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.6;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  font-size: 0.9rem;
+  &:hover { opacity: 1; }
+}
+
+.sp-badge-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+// ── Icon Buttons ──────────────────────────────────────────────────────────────
+
+.sp-icon-btn {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid $border;
+  border-radius: 6px;
+  color: $muted;
+  cursor: pointer;
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  &:hover { background: rgba(255,255,255,0.1); color: $text; }
+
+  &.sp-icon-btn-danger {
+    &:hover { background: rgba($accent, 0.15); color: lighten($accent, 20%); border-color: rgba($accent, 0.3); }
+  }
+}
+
+// ── Buttons ───────────────────────────────────────────────────────────────────
+
+.sp-btn {
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.83rem;
+  font-weight: 500;
+  padding: 7px 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+  border: none;
+
+  &.sp-btn-primary {
+    background: $accent;
+    color: #fff;
+    &:hover:not(:disabled) { background: $accent-hover; }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+
+  &.sp-btn-outline {
+    background: transparent;
+    border: 1px solid $border;
+    color: $text;
+    &:hover { background: rgba(255,255,255,0.06); }
+  }
+
+  &.sp-btn-ghost {
+    background: transparent;
+    color: $muted;
+    &:hover { color: $text; background: rgba(255,255,255,0.05); }
+  }
+
+  &.sp-btn-sm { padding: 5px 12px; font-size: 0.78rem; }
+  &.sp-btn-xs { padding: 2px 7px; font-size: 0.72rem; }
+}
+
+.sp-btn-icon { font-size: 1rem; line-height: 1; }
+
+// ── Selects & Inputs ──────────────────────────────────────────────────────────
+
+.sp-select,
+.sp-select-full {
+  background: $card-bg;
+  border: 1px solid $border;
+  border-radius: 6px;
+  color: $text;
+  font-size: 0.82rem;
+  padding: 6px 10px;
+  outline: none;
+  transition: border-color 0.15s;
+
+  &:focus { border-color: rgba($accent, 0.5); }
+}
+
+.sp-select-full { width: 100%; }
+
+.sp-select-sm {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid $border;
+  border-radius: 4px;
+  color: $text;
+  font-size: 0.77rem;
+  padding: 3px 6px;
+  outline: none;
+  width: 100%;
+}
+
+.sp-input,
+.sp-input-sm {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid $border;
+  border-radius: 6px;
+  color: $text;
+  font-size: 0.82rem;
+  padding: 6px 10px;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+
+  &::placeholder { color: $muted; }
+  &:focus { border-color: rgba($accent, 0.5); }
+}
+
+.sp-input-sm {
+  font-size: 0.77rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.sp-textarea {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid $border;
+  border-radius: 6px;
+  color: $text;
+  font-size: 0.82rem;
+  padding: 7px 10px;
+  outline: none;
+  width: 100%;
+  resize: vertical;
+  transition: border-color 0.15s;
+
+  &::placeholder { color: $muted; }
+  &:focus { border-color: rgba($accent, 0.5); }
+}
+
+.sp-input-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+// ── Form Page ─────────────────────────────────────────────────────────────────
+
+.sp-form-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.sp-form-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0;
+  color: $text;
+}
+
+.sp-form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.sp-form-section {
+  background: $card-bg;
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 20px 22px;
+  margin-bottom: 16px;
+}
+
+.sp-form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.sp-form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.sp-form-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; @media (max-width: 900px) { grid-template-columns: 1fr 1fr; } }
+
+.sp-field { display: flex; flex-direction: column; gap: 5px; }
+.sp-field-full { grid-column: 1 / -1; }
+
+.sp-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: $muted;
+}
+
+.sp-label-hint {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.sp-section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: $text;
+  margin: 0 0 14px;
+}
+
+.sp-subsection-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.65);
+  margin: 0 0 10px;
+}
+
+.sp-form-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 0 0;
+  border-top: 1px solid $border;
+  margin-top: 8px;
+}
+
+// ── Back button ───────────────────────────────────────────────────────────────
+
+.sp-back-btn {
+  background: none;
+  border: none;
+  color: $muted;
+  cursor: pointer;
+  font-size: 0.82rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.12s;
+  flex-shrink: 0;
+
+  &:hover { color: $text; }
+}
+
+// ── Phases ────────────────────────────────────────────────────────────────────
+
+.sp-phases-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sp-phase-card {
+  border: 1px solid $border;
+  border-radius: $radius;
+  overflow: hidden;
+}
+
+.sp-phase-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.04);
+  padding: 10px 14px;
+  border-bottom: 1px solid $border;
+}
+
+.sp-phase-name { flex: 1; font-weight: 600; }
+
+.sp-phase-duration {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.sp-duration-input { width: 62px; text-align: center; }
+.sp-duration-label { font-size: 0.78rem; color: $muted; white-space: nowrap; }
+
+.sp-phase-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+// Phase overview (read-only)
+.sp-phase-overview-list { display: flex; flex-direction: column; gap: 10px; }
+
+.sp-phase-overview-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid $border;
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+
+.sp-phase-overview-name { font-weight: 600; font-size: 0.88rem; color: $text; }
+.sp-phase-overview-desc { font-size: 0.8rem; color: $muted; margin-top: 3px; }
+.sp-duration-badge { background: rgba($accent, 0.15); color: lighten($accent, 20%); border-radius: 4px; font-size: 0.72rem; font-weight: 600; padding: 2px 8px; white-space: nowrap; flex-shrink: 0; margin-left: 10px; }
+
+// ── Week tables ───────────────────────────────────────────────────────────────
+
+.sp-week-table-wrap {
+  overflow-x: auto;
+  border-radius: 6px;
+  border: 1px solid $border;
+}
+
+.sp-week-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+
+  th {
+    background: rgba(255,255,255,0.04);
+    color: $muted;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 8px 10px;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid $border;
+  }
+
+  td {
+    padding: 6px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    vertical-align: middle;
+    color: $text;
+
+    &:last-child { border-right: none; }
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+}
+
+.sp-day-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: $muted;
+  white-space: nowrap;
+  width: 90px;
+}
+
+.sp-day-type-badge {
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  text-transform: capitalize;
+
+  &.sp-day-training  { background: rgba($accent, 0.15);      color: lighten($accent, 20%); }
+  &.sp-day-match     { background: rgba($accent, 0.25);      color: lighten($accent, 25%); }
+  &.sp-day-recovery  { background: rgba(245,158,11,0.15);    color: #fcd34d; }
+  &.sp-day-rest      { background: rgba(100,116,139,0.15);   color: #94a3b8; }
+}
+
+.sp-intensity {
+  font-size: 0.75rem;
+  font-weight: 600;
+  &.sp-intensity-high   { color: lighten($accent, 20%); }
+  &.sp-intensity-medium { color: #fcd34d; }
+  &.sp-intensity-low    { color: #86efac; }
+}
+
+// ── Week block (multi-week editor) ────────────────────────────────────────────
+
+.sp-week-block {
+  border: 1px solid $border;
+  border-radius: $radius;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.sp-week-block-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.04);
+  padding: 10px 14px;
+  border-bottom: 1px solid $border;
+}
+
+.sp-week-label-text {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: $muted;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.sp-week-label-input { flex: 1; }
+
+// ── Season phase editor ───────────────────────────────────────────────────────
+
+.sp-season-phase {
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.sp-season-phase-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+// Season phase overview cards
+.sp-season-phases-overview { display: flex; flex-direction: column; gap: 10px; }
+
+.sp-season-phase-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid $border;
+  border-radius: 6px;
+  padding: 12px 16px;
+}
+
+.sp-season-phase-name   { font-weight: 600; font-size: 0.9rem; color: $text; margin-bottom: 4px; }
+.sp-season-phase-dates  { font-size: 0.78rem; color: $muted; margin-bottom: 3px; }
+.sp-season-phase-focus  { font-size: 0.8rem; color: rgba(255,255,255,0.65); margin-bottom: 2px; }
+.sp-season-phase-structure { font-size: 0.78rem; color: $muted; }
+
+// ── Detail page ───────────────────────────────────────────────────────────────
+
+.sp-detail-header {
+  background: $card-bg;
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 18px 22px 0;
+  margin-bottom: 16px;
+}
+
+.sp-detail-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.sp-detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.sp-detail-title-row { margin-bottom: 10px; }
+
+.sp-title-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid transparent;
+  color: $text;
+  font-size: 1.35rem;
+  font-weight: 700;
+  outline: none;
+  padding: 4px 0;
+  width: 100%;
+  transition: border-color 0.15s;
+
+  &::placeholder { color: $muted; }
+  &:focus { border-bottom-color: rgba($accent, 0.4); }
+}
+
+.sp-detail-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.sp-meta-text {
+  font-size: 0.78rem;
+  color: $muted;
+}
+
+.sp-tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.sp-tag-add { flex-shrink: 0; }
+
+.sp-phase-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+
+  .sp-label {
+    font-size: 0.75rem;
+    white-space: nowrap;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+}
+
+.sp-detail-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid $border;
+  margin: 0 -22px;
+  padding: 0 22px;
+}
+
+.sp-detail-tabs .sp-tab {
+  background: transparent;
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  padding: 8px 16px;
+  font-size: 0.83rem;
+  margin-bottom: -1px;
+
+  &.sp-tab-active {
+    background: transparent;
+    border-bottom-color: $accent;
+    color: $text;
+    box-shadow: none;
+  }
+}
+
+.sp-detail-body {
+  // no outer padding — sections handle their own
+}
+
+// ── Info Grid (overview) ──────────────────────────────────────────────────────
+
+.sp-info-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+
+  &.sp-info-grid-2 { grid-template-columns: 1fr 1fr; }
+
+  @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); }
+}
+
+.sp-info-box {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid $border;
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+
+.sp-info-box-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: $muted;
+  margin-bottom: 4px;
+}
+
+.sp-info-box-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $text;
+}
+
+.sp-overview-section {
+  background: $card-bg;
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+
+.sp-overview-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: $muted;
+  margin-bottom: 8px;
+}
+
+.sp-block-weeks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+// ── Bullet list ───────────────────────────────────────────────────────────────
+
+.sp-bullet-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sp-bullet-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.7);
+  padding: 2px 0;
+
+  &::before { content: '•'; margin-right: 6px; color: $muted; flex-shrink: 0; }
+}
+
+.sp-remove-btn {
+  background: none;
+  border: none;
+  color: $muted;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 2px;
+  flex-shrink: 0;
+  &:hover { color: lighten($accent, 20%); }
+}
+
+// ── Spacing utilities ─────────────────────────────────────────────────────────
+
+.sp-mt-2 { margin-top: 8px; }
+.sp-mt-3 { margin-top: 14px; }
+.sp-mt-4 { margin-top: 20px; }
+.sp-mb-1 { margin-bottom: 6px; }

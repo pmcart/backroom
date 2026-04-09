@@ -1,1 +1,741 @@
-<p>idp works!</p>
+@if (loading()) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading…</span></div>
+  </div>
+} @else if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+} @else {
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     CREATE VIEW  (full-page, replaces split layout)
+══════════════════════════════════════════════════════════════════════════ -->
+@if (createView()) {
+<div class="idp-create-page">
+
+  <div class="icp-header">
+    <button class="icp-back-btn" (click)="cancelCreate()">← Back to IDPs</button>
+    <h2 class="icp-title">Create New IDP</h2>
+  </div>
+
+  <div class="icp-body">
+
+    <!-- IDP Type Selection -->
+    <div class="icp-section">
+      <div class="icp-section-title">IDP Type</div>
+      <div class="icp-type-grid">
+        <div
+          class="icp-type-card"
+          [class.icp-type-selected-standard]="createMode() === 'standard'"
+          (click)="createMode.set('standard')"
+        >
+          <div class="icp-type-icon">🎯</div>
+          <div>
+            <div class="icp-type-name">Standard IDP</div>
+            <div class="icp-type-desc">Development goals, coach comments, progress notes and player reflections.</div>
+          </div>
+        </div>
+        <div
+          class="icp-type-card"
+          [class.icp-type-selected-elite]="createMode() === 'elite'"
+          (click)="createMode.set('elite')"
+        >
+          <div class="icp-type-icon">🏆</div>
+          <div>
+            <div class="icp-type-name">Elite IDP</div>
+            <div class="icp-type-desc">Full living document: holistic evaluation, positional profile, performance support, off-field development.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Player Info -->
+    <div class="icp-section">
+      <div class="icp-section-title">Player Details</div>
+
+      @if (availablePlayersForCreate().length === 0) {
+        <div class="icp-info-alert">All players in this squad already have an IDP.</div>
+      } @else {
+        <div class="icp-form-grid">
+          <div class="icp-field">
+            <label class="icp-label">Player <span class="icp-required">*</span></label>
+            <select
+              class="icp-select"
+              [value]="createPlayerId()"
+              (change)="createPlayerId.set($any($event.target).value)"
+            >
+              <option value="">Select a player…</option>
+              @for (p of availablePlayersForCreate(); track p.id) {
+                <option [value]="p.id">{{ p.firstName }} {{ p.lastName }}{{ p.position ? ' — ' + p.position : '' }}</option>
+              }
+            </select>
+          </div>
+          <div class="icp-field">
+            <label class="icp-label">Age Group</label>
+            <input
+              class="icp-input"
+              placeholder="e.g. U17 Boys"
+              [value]="createAgeGroup()"
+              (input)="createAgeGroup.set($any($event.target).value)"
+            />
+          </div>
+          <div class="icp-field">
+            <label class="icp-label">Review Date</label>
+            <input
+              type="date"
+              class="icp-input"
+              [value]="createReviewDate()"
+              (input)="createReviewDate.set($any($event.target).value)"
+            />
+          </div>
+        </div>
+
+        @if (createPlayerId()) {
+          <div class="icp-player-preview">
+            @for (p of availablePlayersForCreate(); track p.id) {
+              @if (p.id === createPlayerId()) {
+                <div class="icp-preview-avatar">{{ (p.firstName[0] ?? '') + (p.lastName[0] ?? '') }}</div>
+                <div>
+                  <div class="icp-preview-name">{{ p.firstName }} {{ p.lastName }}</div>
+                  <div class="icp-preview-sub">{{ p.position || '—' }} · {{ createAgeGroup() || selectedSquad()?.ageGroup || '—' }}</div>
+                </div>
+                <span class="icp-mode-badge" [class.icp-mode-elite]="createMode() === 'elite'">
+                  {{ createMode() === 'elite' ? 'Elite IDP' : 'Standard IDP' }}
+                </span>
+              }
+            }
+          </div>
+        }
+      }
+    </div>
+
+  </div><!-- end icp-body -->
+
+  <div class="icp-footer">
+    <button class="icp-btn icp-btn-ghost" (click)="cancelCreate()">Cancel</button>
+    <button
+      class="icp-btn icp-btn-primary"
+      [disabled]="!createPlayerId() || saving()"
+      (click)="submitCreate()"
+    >{{ saving() ? 'Creating…' : 'Create IDP' }}</button>
+  </div>
+
+</div>
+}<!-- end create view -->
+
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     SPLIT LAYOUT
+══════════════════════════════════════════════════════════════════════════ -->
+@if (!createView()) {
+<div class="idp-layout">
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       SIDEBAR — Player List
+  ════════════════════════════════════════════════════════════════════════ -->
+  <aside class="idp-sidebar">
+
+    <div class="sidebar-top">
+      <div class="sidebar-top-row">
+        <span class="sidebar-title">Player IDPs</span>
+        <button
+          class="icp-btn icp-btn-primary icp-btn-sm"
+          [disabled]="availablePlayersForCreate().length === 0"
+          (click)="openCreateForm()"
+        >+ New</button>
+      </div>
+      <div class="sidebar-count">{{ filteredIdps().length }} IDP{{ filteredIdps().length !== 1 ? 's' : '' }}</div>
+      <input
+        class="idp-search"
+        placeholder="Search player…"
+        [value]="sidebarSearch()"
+        (input)="sidebarSearch.set($any($event.target).value)"
+      />
+    </div>
+
+    <ul class="idp-list">
+      @if (filteredIdps().length === 0) {
+        <li class="idp-list-empty">No IDPs found</li>
+      }
+      @for (idp of filteredIdps(); track idp.id) {
+        <li
+          class="idp-list-item"
+          [class.active]="selectedIdpId() === idp.id"
+          (click)="selectIdp(idp.id)"
+        >
+          <div class="player-avatar">{{ playerInitials(idp) }}</div>
+
+          <div class="idp-list-body">
+            <div class="idp-list-top">
+              <div class="idp-list-name-wrap">
+                <span class="idp-list-name">{{ idp.player?.firstName }} {{ idp.player?.lastName }}</span>
+                <span class="idp-list-sub">{{ idp.player?.position || '—' }}</span>
+              </div>
+              <div class="idp-list-right">
+                <span class="icp-mode-badge-sm" [class.icp-mode-elite]="idp.mode === 'elite'">
+                  {{ idp.mode === 'elite' ? 'Elite' : 'Standard' }}
+                </span>
+                <button
+                  class="idp-delete-btn"
+                  title="Delete IDP"
+                  (click)="$event.stopPropagation(); deleteIdp(idp.id)"
+                >🗑</button>
+              </div>
+            </div>
+            <div class="idp-list-progress-row">
+              <div class="idp-progress-bar-wrap">
+                <div class="idp-progress-bar" [style.width.%]="idp.progress" [class.idp-progress-green]="idp.progress >= 70" [class.idp-progress-amber]="idp.progress >= 40 && idp.progress < 70" [class.idp-progress-red]="idp.progress < 40"></div>
+              </div>
+              <span class="idp-progress-pct">{{ idp.progress }}%</span>
+            </div>
+            @if (atRiskCount(idp) > 0) {
+              <div class="idp-at-risk">
+                ⚠ {{ atRiskCount(idp) }} goal{{ atRiskCount(idp) > 1 ? 's' : '' }} at risk
+              </div>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  </aside>
+
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       DETAIL PANEL
+  ════════════════════════════════════════════════════════════════════════ -->
+  <main class="idp-detail">
+
+    @if (!selectedIdp()) {
+      <div class="idp-empty-state">
+        <div class="idp-empty-icon">📋</div>
+        <p>Select a player to view their IDP</p>
+      </div>
+    } @else {
+
+      <!-- ── Detail Header ─────────────────────────────────────────────────── -->
+      <div class="detail-header">
+
+        <!-- Row 1: avatar + name + actions -->
+        <div class="dh-top">
+          <div class="dh-player-info">
+            <div class="dh-avatar">{{ playerInitials(selectedIdp()!) }}</div>
+            <div>
+              <div class="dh-player-name">
+                {{ selectedIdp()!.player?.firstName }} {{ selectedIdp()!.player?.lastName }}
+              </div>
+              <div class="dh-player-meta">
+                <span class="icp-mode-badge" [class.icp-mode-elite]="selectedIdp()!.mode === 'elite'">
+                  {{ selectedIdp()!.mode === 'elite' ? 'Elite IDP' : 'Standard IDP' }}
+                </span>
+                <span class="dh-meta-text">{{ selectedIdp()!.player?.position || '—' }}</span>
+                @if (selectedIdp()!.ageGroup) {
+                  <span class="dh-meta-dot">·</span>
+                  <span class="dh-meta-text">{{ selectedIdp()!.ageGroup }}</span>
+                }
+              </div>
+            </div>
+          </div>
+          <div class="dh-actions">
+            <select
+              class="icp-select icp-select-sm"
+              [value]="selectedIdp()!.status"
+              (change)="updateStatus($any($event.target).value)"
+            >
+              <option value="active">Active</option>
+              <option value="review-due">Review Due</option>
+              <option value="completed">Completed</option>
+            </select>
+            <button class="idp-danger-btn" (click)="deleteIdp(selectedIdp()!.id)">Delete</button>
+          </div>
+        </div>
+
+        <!-- Row 2: metadata -->
+        <div class="dh-meta-row">
+          <div class="dh-meta-item">
+            <span class="dh-meta-icon">📅</span>
+            <span class="dh-meta-label">Created:</span>
+            <span class="dh-meta-value">{{ formatDate(selectedIdp()!.createdAt) }}</span>
+          </div>
+          @if (selectedIdp()!.reviewDate) {
+            <div class="dh-meta-item">
+              <span class="dh-meta-icon">🕐</span>
+              <span class="dh-meta-label">Review:</span>
+              <span class="dh-meta-value">{{ formatDate(selectedIdp()!.reviewDate) }}</span>
+            </div>
+          }
+          <div class="dh-meta-item">
+            <span class="dh-meta-icon">🎯</span>
+            <span class="dh-meta-label">Goals:</span>
+            <span class="dh-meta-value">{{ selectedIdp()!.goals.length }}</span>
+          </div>
+          @if (selectedIdp()!.mode === 'elite' && selectedIdp()!.primaryPosition) {
+            <div class="dh-meta-item">
+              <span class="dh-meta-icon">🛡</span>
+              <span class="dh-meta-value">{{ selectedIdp()!.primaryPosition }}</span>
+            </div>
+          }
+        </div>
+
+        <!-- Row 3: overall progress -->
+        <div class="dh-progress-row">
+          <span class="dh-progress-label">Overall Progress</span>
+          <div class="dh-progress-bar-wrap">
+            <div
+              class="idp-progress-bar"
+              [style.width.%]="selectedIdp()!.progress"
+              [class.idp-progress-green]="selectedIdp()!.progress >= 70"
+              [class.idp-progress-amber]="selectedIdp()!.progress >= 40 && selectedIdp()!.progress < 70"
+              [class.idp-progress-red]="selectedIdp()!.progress < 40"
+            ></div>
+          </div>
+          <span class="dh-progress-pct {{ progressTextClass(selectedIdp()!.progress) }}">{{ selectedIdp()!.progress }}%</span>
+        </div>
+
+        <!-- Tabs -->
+        <div class="detail-tabs">
+          <button class="detail-tab" [class.active]="activeTab() === 'overview'" (click)="activeTab.set('overview')">Overview</button>
+          <button class="detail-tab" [class.active]="activeTab() === 'goals'" (click)="activeTab.set('goals')">
+            Goals
+            <span class="tab-count">{{ selectedIdp()!.goals.length }}</span>
+          </button>
+          <button class="detail-tab" [class.active]="activeTab() === 'notes'" (click)="activeTab.set('notes')">Notes</button>
+          @if (selectedIdp()!.mode === 'elite') {
+            <button class="detail-tab" [class.active]="activeTab() === 'elite'" (click)="activeTab.set('elite')">Elite Profile</button>
+          }
+          <button class="detail-tab" [class.active]="activeTab() === 'reflections'" (click)="activeTab.set('reflections')">Reflections</button>
+        </div>
+      </div><!-- /detail-header -->
+
+
+      <!-- ── Tab Body ──────────────────────────────────────────────────────── -->
+      <div class="detail-body">
+
+        <!-- ════ OVERVIEW TAB ════ -->
+        @if (activeTab() === 'overview') {
+
+          <div class="idp-info-grid">
+            <div class="idp-info-box">
+              <div class="idp-info-label">Age Group</div>
+              <div class="idp-info-value">{{ selectedIdp()!.ageGroup || '—' }}</div>
+            </div>
+            <div class="idp-info-box">
+              <div class="idp-info-label">Review Date</div>
+              <div class="idp-info-value">{{ formatDate(selectedIdp()!.reviewDate) }}</div>
+            </div>
+            <div class="idp-info-box">
+              <div class="idp-info-label">IDP Mode</div>
+              <div class="idp-info-value" style="text-transform:capitalize">{{ selectedIdp()!.mode }}</div>
+            </div>
+            <div class="idp-info-box">
+              <div class="idp-info-label">Status</div>
+              <div class="idp-info-value">
+                <span class="idp-status-badge idp-status-{{ selectedIdp()!.status }}">{{ statusLabel(selectedIdp()!.status) }}</span>
+              </div>
+            </div>
+          </div>
+
+          @if (selectedIdp()!.goals.length > 0) {
+            <h3 class="idp-section-title">Goal Summary</h3>
+            <div class="idp-goal-summary-list">
+              @for (goal of selectedIdp()!.goals; track goal.id) {
+                <div class="idp-goal-summary-card">
+                  <div class="idp-goal-summary-top">
+                    <div>
+                      <div class="idp-goal-title">{{ goal.title }}</div>
+                      @if (goal.category) {
+                        <div class="idp-goal-cat">{{ goal.category }}</div>
+                      }
+                    </div>
+                    <span class="idp-goal-status-badge idp-goal-status-{{ goal.status }}">{{ goalStatusLabel(goal.status) }}</span>
+                  </div>
+                  <div class="idp-mini-progress">
+                    <div class="idp-progress-bar-wrap idp-progress-bar-wrap-sm">
+                      <div class="idp-progress-bar" [style.width.%]="goal.progress"
+                        [class.idp-progress-green]="goal.progress >= 70"
+                        [class.idp-progress-amber]="goal.progress >= 40 && goal.progress < 70"
+                        [class.idp-progress-red]="goal.progress < 40"></div>
+                    </div>
+                    <span class="idp-mini-pct {{ progressTextClass(goal.progress) }}">{{ goal.progress }}%</span>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="idp-empty-hint">No goals yet. Switch to the Goals tab to add some.</p>
+          }
+        }
+
+
+        <!-- ════ GOALS TAB ════ -->
+        @if (activeTab() === 'goals') {
+
+          <div class="goals-header">
+            <h3 class="idp-section-title" style="margin:0">Development Goals</h3>
+            @if (!showGoalForm()) {
+              <button class="icp-btn icp-btn-primary icp-btn-sm" (click)="openAddGoal()">+ Add Goal</button>
+            }
+          </div>
+
+          <!-- Inline Goal Form -->
+          @if (showGoalForm()) {
+            <div class="goal-form-card">
+              <div class="goal-form-header">
+                <span>{{ editingGoalId() ? 'Edit Goal' : 'Add Goal' }}</span>
+                <button class="goal-form-close" (click)="showGoalForm.set(false)">×</button>
+              </div>
+              <div class="goal-form-body">
+                <div class="icp-field">
+                  <label class="icp-label">Title <span class="icp-required">*</span></label>
+                  <input class="icp-input" placeholder="Goal title…"
+                    [value]="goalTitle()"
+                    (input)="goalTitle.set($any($event.target).value)" />
+                </div>
+                <div class="goal-form-grid">
+                  <div class="icp-field">
+                    <label class="icp-label">Category</label>
+                    <select class="icp-select"
+                      [value]="goalCategory()"
+                      (change)="goalCategory.set($any($event.target).value)">
+                      <option value="">— select —</option>
+                      <option value="technical">Technical</option>
+                      <option value="tactical">Tactical</option>
+                      <option value="physical">Physical</option>
+                      <option value="psychological">Psychological</option>
+                      <option value="lifestyle">Lifestyle &amp; Education</option>
+                    </select>
+                  </div>
+                  <div class="icp-field">
+                    <label class="icp-label">Target Date</label>
+                    <input type="date" class="icp-input"
+                      [value]="goalTargetDate()"
+                      (input)="goalTargetDate.set($any($event.target).value)" />
+                  </div>
+                </div>
+                <div class="icp-field">
+                  <label class="icp-label">Description</label>
+                  <textarea class="icp-textarea" rows="2" placeholder="Specific, measurable, time-bound…"
+                    [value]="goalDescription()"
+                    (input)="goalDescription.set($any($event.target).value)"></textarea>
+                </div>
+                <div class="icp-field">
+                  <label class="icp-label">KPI / Measurement</label>
+                  <input class="icp-input" placeholder="How will success be measured?"
+                    [value]="goalKpi()"
+                    (input)="goalKpi.set($any($event.target).value)" />
+                </div>
+                <div class="goal-form-grid">
+                  <div class="icp-field">
+                    <label class="icp-label">Progress — {{ goalProgress() }}%</label>
+                    <input type="range" class="icp-range" min="0" max="100"
+                      [value]="goalProgress()"
+                      (input)="goalProgress.set(+$any($event.target).value)" />
+                  </div>
+                  <div class="icp-field">
+                    <label class="icp-label">Status</label>
+                    <select class="icp-select"
+                      [value]="goalStatus()"
+                      (change)="goalStatus.set($any($event.target).value)">
+                      <option value="not-started">Not Started</option>
+                      <option value="in-progress">In Progress</option>
+                      <option value="on-track">On Track</option>
+                      <option value="at-risk">At Risk</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="icp-field">
+                  <label class="icp-label">Coach Rating</label>
+                  <div class="goal-stars">
+                    @for (s of stars; track s) {
+                      <button
+                        type="button"
+                        class="star-btn"
+                        [class.star-active]="s <= (goalRating() ?? 0)"
+                        (click)="setGoalRating(s)"
+                      >★</button>
+                    }
+                    @if (goalRating()) {
+                      <button type="button" class="star-clear" (click)="goalRating.set(null)">Clear</button>
+                    }
+                  </div>
+                </div>
+              </div>
+              <div class="goal-form-footer">
+                <button class="icp-btn icp-btn-ghost" (click)="showGoalForm.set(false)">Cancel</button>
+                <button class="icp-btn icp-btn-primary" [disabled]="!goalTitle().trim() || saving()" (click)="submitGoal()">
+                  {{ saving() ? 'Saving…' : (editingGoalId() ? 'Update Goal' : 'Add Goal') }}
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- Goal Cards -->
+          @if (selectedIdp()!.goals.length === 0 && !showGoalForm()) {
+            <div class="idp-empty-hint" style="text-align:center; padding:32px 0">No goals yet. Add the first goal for this player.</div>
+          } @else {
+            <div class="goal-cards-list">
+              @for (goal of selectedIdp()!.goals; track goal.id) {
+                <div class="goal-card">
+                  <div class="goal-card-header">
+                    <div>
+                      <div class="goal-card-title">
+                        <span class="goal-cat-icon">{{ goal.category === 'technical' ? '⚽' : goal.category === 'tactical' ? '🧠' : goal.category === 'physical' ? '💪' : goal.category === 'psychological' ? '🎯' : '📚' }}</span>
+                        {{ goal.title }}
+                      </div>
+                      @if (goal.category) {
+                        <div class="goal-card-sub" style="text-transform:capitalize">{{ goal.category }}</div>
+                      }
+                      @if (goal.targetDate) {
+                        <div class="goal-card-sub">Target: {{ formatDate(goal.targetDate) }}</div>
+                      }
+                    </div>
+                    <div class="goal-card-actions">
+                      <select
+                        class="icp-select icp-select-sm"
+                        [value]="goal.status"
+                        (change)="quickSetGoalStatus(goal, $any($event.target).value)"
+                      >
+                        <option value="not-started">Not Started</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="on-track">On Track</option>
+                        <option value="at-risk">At Risk</option>
+                        <option value="completed">Completed</option>
+                      </select>
+                      <button class="goal-edit-btn" (click)="openEditGoal(goal)">Edit</button>
+                      <button class="goal-delete-btn" (click)="deleteGoal(goal.id)">Delete</button>
+                    </div>
+                  </div>
+
+                  @if (goal.description) {
+                    <p class="goal-card-desc">{{ goal.description }}</p>
+                  }
+
+                  @if (goal.kpi) {
+                    <div class="goal-kpi">
+                      <span class="goal-kpi-label">KPI:</span> {{ goal.kpi }}
+                    </div>
+                  }
+
+                  <div class="goal-progress-row">
+                    <span class="goal-progress-label">Progress</span>
+                    <div class="idp-progress-bar-wrap" style="flex:1">
+                      <div class="idp-progress-bar" [style.width.%]="goal.progress"
+                        [class.idp-progress-green]="goal.progress >= 70"
+                        [class.idp-progress-amber]="goal.progress >= 40 && goal.progress < 70"
+                        [class.idp-progress-red]="goal.progress < 40"></div>
+                    </div>
+                    <span class="goal-progress-pct {{ progressTextClass(goal.progress) }}">{{ goal.progress }}%</span>
+                  </div>
+
+                  @if (goal.coachRating !== null && goal.coachRating !== undefined) {
+                    <div class="goal-rating-row">
+                      <span class="goal-rating-label">Coach Rating</span>
+                      <div class="goal-stars-display">
+                        @for (s of stars; track s) {
+                          <span [class.star-active]="s <= (goal.coachRating ?? 0)">★</span>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        }
+
+
+        <!-- ════ NOTES TAB ════ -->
+        @if (activeTab() === 'notes') {
+
+          <!-- Coach Comments -->
+          <div class="notes-section">
+            <div class="notes-section-header">
+              <h3 class="idp-section-title" style="margin:0">Coach Comments</h3>
+              @if (!editingComments()) {
+                <button class="icp-btn icp-btn-ghost icp-btn-sm" (click)="startEditComments()">
+                  {{ selectedIdp()!.coachComments ? 'Edit' : 'Add' }}
+                </button>
+              }
+            </div>
+            @if (editingComments()) {
+              <textarea class="icp-textarea" rows="4" placeholder="Write coach comments…"
+                [value]="commentText()"
+                (input)="commentText.set($any($event.target).value)"></textarea>
+              <div class="notes-edit-actions">
+                <button class="icp-btn icp-btn-ghost icp-btn-sm" (click)="editingComments.set(false)">Cancel</button>
+                <button class="icp-btn icp-btn-primary icp-btn-sm" (click)="saveComments()">Save</button>
+              </div>
+            } @else {
+              @if (selectedIdp()!.coachComments) {
+                <p class="notes-comment-text">{{ selectedIdp()!.coachComments }}</p>
+              } @else {
+                <p class="idp-empty-hint">No comments yet.</p>
+              }
+            }
+          </div>
+
+          <div class="notes-divider"></div>
+
+          <!-- Progress Notes -->
+          <div class="notes-section">
+            <h3 class="idp-section-title">Progress Notes</h3>
+
+            <div class="progress-note-form">
+              <textarea class="icp-textarea" rows="2" placeholder="Write a progress note…"
+                [value]="noteContent()"
+                (input)="noteContent.set($any($event.target).value)"></textarea>
+              <div class="progress-note-form-row">
+                <select class="icp-select icp-select-sm"
+                  [value]="noteStatus()"
+                  (change)="noteStatus.set($any($event.target).value)">
+                  <option value="on-track">On Track</option>
+                  <option value="needs-attention">Needs Attention</option>
+                  <option value="exceeding">Exceeding</option>
+                </select>
+                <button class="icp-btn icp-btn-primary icp-btn-sm" [disabled]="!noteContent().trim()" (click)="submitNote()">Log Update</button>
+              </div>
+            </div>
+
+            @if (!selectedIdp()!.notes?.length) {
+              <p class="idp-empty-hint">No progress notes yet.</p>
+            } @else {
+              <div class="notes-list">
+                @for (note of selectedIdp()!.notes; track note.id) {
+                  <div class="note-card">
+                    <div class="note-card-top">
+                      <span class="note-status {{ noteStatusClass(note.status) }}">{{ noteStatusLabel(note.status) }}</span>
+                      <span class="note-date">{{ formatDate(note.createdAt) }}</span>
+                    </div>
+                    <p class="note-content">{{ note.content }}</p>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+
+        <!-- ════ ELITE TAB ════ -->
+        @if (activeTab() === 'elite' && selectedIdp()!.mode === 'elite') {
+
+          <!-- Holistic Evaluation -->
+          <div class="elite-section">
+            <h3 class="idp-section-title">📊 Holistic Evaluation</h3>
+            <div class="holistic-pillars">
+              @for (pillar of holisticPillars; track pillar) {
+                <div class="holistic-pillar">
+                  <div class="holistic-pillar-header">
+                    <span class="holistic-pillar-name">{{ pillar }}</span>
+                    <span class="holistic-pillar-value">{{ holisticEval()[pillar] }} / 10</span>
+                  </div>
+                  <input type="range" class="icp-range" min="1" max="10"
+                    [value]="holisticEval()[pillar]"
+                    (input)="setHolisticPillar(pillar, +$any($event.target).value)" />
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="elite-divider"></div>
+
+          <!-- Positional Profile -->
+          <div class="elite-section">
+            <h3 class="idp-section-title">🛡 Positional Profile</h3>
+            <div class="icp-form-grid-2">
+              <div class="icp-field">
+                <label class="icp-label">Primary Position</label>
+                <input class="icp-input" placeholder="e.g. Central Midfielder"
+                  [value]="primaryPosition()"
+                  (input)="primaryPosition.set($any($event.target).value)" />
+              </div>
+              <div class="icp-field">
+                <label class="icp-label">Secondary Position</label>
+                <input class="icp-input" placeholder="e.g. Attacking Midfielder"
+                  [value]="secondaryPosition()"
+                  (input)="secondaryPosition.set($any($event.target).value)" />
+              </div>
+            </div>
+            <div class="icp-field" style="margin-top:12px">
+              <label class="icp-label">Positional Demands</label>
+              <div class="idp-input-row">
+                <input class="icp-input" placeholder="Add a demand…"
+                  [value]="newDemand()"
+                  (input)="newDemand.set($any($event.target).value)"
+                  (keyup.enter)="addDemand()" />
+                <button class="icp-btn icp-btn-outline icp-btn-sm" (click)="addDemand()">Add</button>
+              </div>
+              <div class="idp-badge-list" style="margin-top:8px">
+                @if (positionalDemands().length === 0) {
+                  <span class="idp-empty-hint" style="font-size:0.78rem">No demands added yet.</span>
+                }
+                @for (demand of positionalDemands(); track $index; let i = $index) {
+                  <span class="idp-demand-badge">
+                    {{ demand }}
+                    <button class="idp-badge-remove" (click)="removeDemand(i)">×</button>
+                  </span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="elite-divider"></div>
+
+          <!-- Performance Support & Off-Field -->
+          <div class="elite-section">
+            <div class="icp-form-grid-2">
+              <div class="icp-field">
+                <label class="icp-label">💪 Performance Support</label>
+                <textarea class="icp-textarea" rows="4" placeholder="Nutrition, recovery, sports science…"
+                  [value]="performanceSupport()"
+                  (input)="performanceSupport.set($any($event.target).value)"></textarea>
+              </div>
+              <div class="icp-field">
+                <label class="icp-label">🎓 Off-Field Development</label>
+                <textarea class="icp-textarea" rows="4" placeholder="Education, leadership, character…"
+                  [value]="offFieldDevelopment()"
+                  (input)="offFieldDevelopment.set($any($event.target).value)"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="elite-divider"></div>
+
+          <!-- Methodology Tags -->
+          <div class="elite-section">
+            <h3 class="idp-section-title">🏷 Methodology Tags</h3>
+            <p class="idp-empty-hint" style="margin-bottom:12px">Link this IDP to club principles and methodology framework.</p>
+            <div class="methodology-tags">
+              @for (tag of allMethodologyTags; track tag) {
+                <button
+                  type="button"
+                  class="method-tag-btn"
+                  [class.method-tag-active]="methodologyTags().includes(tag)"
+                  (click)="toggleMethodologyTag(tag)"
+                >{{ tag }}</button>
+              }
+            </div>
+          </div>
+
+          <div class="elite-save-row">
+            <button class="icp-btn icp-btn-primary" [disabled]="saving()" (click)="saveElite()">
+              {{ saving() ? 'Saving…' : 'Save Elite Profile' }}
+            </button>
+          </div>
+        }
+
+
+        <!-- ════ REFLECTIONS TAB ════ -->
+        @if (activeTab() === 'reflections') {
+          <div class="idp-empty-state" style="height:auto; padding:48px 0">
+            <div class="idp-empty-icon">🪞</div>
+            <p>Player reflections will appear here once the player submits their self-assessment.</p>
+          </div>
+        }
+
+      </div><!-- /detail-body -->
+    }
+  </main><!-- /idp-detail -->
+
+</div><!-- /idp-layout -->
+}<!-- end split layout -->
+
+}<!-- end @else (not loading/error) -->

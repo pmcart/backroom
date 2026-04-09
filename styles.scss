@@ -1,0 +1,194 @@
+// ─── Bootstrap (loaded via @use with variable overrides) ─────────────────────
+@use 'bootstrap/scss/bootstrap' with (
+  // Colours
+  $primary:          #ef4444,
+  $secondary:        #64748b,
+  $success:          #22c55e,
+  $warning:          #eab308,
+  $danger:           #f87171,
+  $info:             #3b82f6,
+  $light:            #1e293b,
+  $dark:             #111827,
+
+  // Body
+  $body-bg:          #0f1117,
+  $body-color:       #f8fafc,
+
+  // Typography
+  $font-family-sans-serif: ('Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif),
+  $font-size-base:   0.875rem,
+  $headings-font-weight: 600,
+  $headings-line-height: 1.3,
+
+  // Links
+  $link-color:       #ef4444,
+  $link-hover-color: #dc2626,
+
+  // Borders
+  $border-color:     rgba(255, 255, 255, 0.08),
+  $border-radius:    0.5rem,
+  $border-radius-sm: 0.375rem,
+  $border-radius-lg: 0.75rem,
+
+  // Cards
+  $card-bg:          rgba(255, 255, 255, 0.03),
+  $card-border-color: rgba(255, 255, 255, 0.08),
+  $card-cap-bg:      transparent,
+  $card-color:       #f8fafc,
+
+  // Inputs
+  $input-bg:             rgba(255, 255, 255, 0.05),
+  $input-color:          #f8fafc,
+  $input-border-color:   rgba(255, 255, 255, 0.15),
+  $input-placeholder-color: #64748b,
+  $input-focus-bg:       rgba(255, 255, 255, 0.08),
+  $input-focus-border-color: #ef4444,
+  $input-focus-box-shadow: (0 0 0 0.2rem rgba(239, 68, 68, 0.25)),
+
+  // Buttons
+  $btn-font-weight:  500,
+  $btn-border-radius: 0.375rem,
+
+  // Tables
+  $table-color:          #f8fafc,
+  $table-bg:             transparent,
+  $table-border-color:   rgba(255, 255, 255, 0.08),
+  $table-striped-bg:     rgba(255, 255, 255, 0.02),
+  $table-hover-bg:       rgba(255, 255, 255, 0.04),
+
+  // Badges
+  $badge-border-radius:  0.75rem,
+
+  // Dropdowns
+  $dropdown-bg:              #1e293b,
+  $dropdown-border-color:    rgba(255, 255, 255, 0.1),
+  $dropdown-color:           #f8fafc,
+  $dropdown-link-color:      #f8fafc,
+  $dropdown-link-hover-bg:   rgba(255, 255, 255, 0.05),
+  $dropdown-link-active-bg:  rgba(239, 68, 68, 0.15),
+  $dropdown-link-active-color: #ef4444,
+
+  // Modals
+  $modal-content-bg:         #1e293b,
+  $modal-content-border-color: rgba(255, 255, 255, 0.1),
+  $modal-header-border-color: rgba(255, 255, 255, 0.08),
+  $modal-footer-border-color: rgba(255, 255, 255, 0.08)
+);
+
+// ─── Design tokens ────────────────────────────────────────────────────────────
+:root {
+  --app-bg:              #0f1117;
+  --sidebar-bg:          #111827;
+  --sidebar-border:      rgba(255, 255, 255, 0.08);
+  --sidebar-fg:          #f1f5f9;
+  --sidebar-muted:       #64748b;
+  --sidebar-active-bg:   rgba(239, 68, 68, 0.15);
+  --sidebar-active-fg:   #ef4444;
+  --sidebar-hover-bg:    rgba(255, 255, 255, 0.05);
+  --accent:              #ef4444;
+  --accent-dark:         #dc2626;
+  --foreground:          #f8fafc;
+  --muted-foreground:    #94a3b8;
+}
+
+// ─── Custom component styles ──────────────────────────────────────────────────
+
+// Dashboard layout
+.dashboard {
+  padding: 2rem;
+
+  @media (min-width: 992px) {
+    padding: 2.5rem;
+  }
+
+  .page-header {
+    margin-bottom: 1.75rem;
+
+    h2 {
+      font-size: 1.5rem;
+      color: var(--foreground);
+    }
+
+    p {
+      color: var(--muted-foreground);
+      margin-top: 0.25rem;
+      font-size: 0.875rem;
+    }
+  }
+}
+
+// Glass card
+.glass-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border-color);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  backdrop-filter: blur(8px);
+
+  h3 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--foreground);
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    font-size: 0.8125rem;
+    color: var(--muted-foreground);
+    line-height: 1.5;
+    margin-bottom: 0;
+  }
+
+  &.placeholder-card {
+    border: 1px dashed rgba(255, 255, 255, 0.15);
+    background: transparent;
+  }
+}
+
+// Stat card
+.stat-card {
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 0.5rem;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(185, 28, 28, 0.2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+
+    .material-icons {
+      font-size: 20px;
+      color: var(--accent);
+    }
+  }
+
+  .stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--foreground);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.8125rem;
+    color: var(--muted-foreground);
+    margin-top: 0.25rem;
+  }
+}
+
+// Status chips (supplement Bootstrap badges)
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.625rem;
+  border-radius: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+
+  &.green  { background: rgba(34, 197, 94, 0.2);  color: #4ade80; }
+  &.amber  { background: rgba(234, 179, 8, 0.2);   color: #facc15; }
+  &.red    { background: rgba(239, 68, 68, 0.2);   color: #f87171; }
+  &.blue   { background: rgba(59, 130, 246, 0.2);  color: #60a5fa; }
+  &.grey   { background: rgba(148, 163, 184, 0.2); color: #94a3b8; }
+}

@@ -3,10 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "api": "npm --prefix backend run start:dev",
+    "web": "npm --prefix frontend run start",
     "backend": "npm --prefix backend run start:dev",
     "frontend": "npm --prefix frontend run start",
-    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
-    "install:all": "npm --prefix backend install && npm --prefix frontend install"
+    "dev": "concurrently \"npm run api\" \"npm run web\"",
+    "install:all": "npm --prefix backend install && npm --prefix frontend install",
+    "build:railway": "npm --prefix frontend install && npm --prefix frontend run build && npm --prefix backend install && npm --prefix backend run build && cp -r frontend/dist/frontend/browser backend/public",
+    "start:prod": "node backend/dist/main"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

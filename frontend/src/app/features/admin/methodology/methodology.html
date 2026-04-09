@@ -1,0 +1,376 @@
+<!-- Page header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="mb-1 fw-semibold">Club Methodology Hub</h4>
+    <p class="text-muted mb-0 small">Football framework, playing philosophy, and development reference library</p>
+  </div>
+  <span class="badge text-bg-secondary">Read-only</span>
+</div>
+
+<!-- Info banner -->
+<div class="d-flex gap-2 align-items-start mb-4 p-3 rounded" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2)">
+  <i class="bi bi-book-half fs-5 flex-shrink-0 text-danger"></i>
+  <div>
+    <strong>Academy Reference System</strong>
+    <p class="mb-0 small text-muted mt-1">
+      This is the academy's central football framework. Principles, values, and development pillars defined here
+      can be referenced across Session Planning and Individual Development Plans using the alignment tag system.
+    </p>
+  </div>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-4">
+  <li class="nav-item">
+    <button class="nav-link" [class.active]="activeTab() === 'identity'" (click)="activeTab.set('identity')">
+      <i class="bi bi-shield-fill me-1"></i>Academy Identity
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" [class.active]="activeTab() === 'game-model'" (click)="activeTab.set('game-model')">
+      <i class="bi bi-diagram-3-fill me-1"></i>Game Model
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" [class.active]="activeTab() === 'development'" (click)="activeTab.set('development')">
+      <i class="bi bi-layers-fill me-1"></i>Development Framework
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" [class.active]="activeTab() === 'tags'" (click)="activeTab.set('tags')">
+      <i class="bi bi-tags-fill me-1"></i>Alignment Tags
+      <span class="badge text-bg-primary ms-1">{{ allTags.length }}</span>
+    </button>
+  </li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- 1. ACADEMY IDENTITY                                                        -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+@if (activeTab() === 'identity') {
+
+  <!-- Playing Philosophy -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header border-bottom">
+      <h6 class="mb-0 fw-semibold"><i class="bi bi-shield-fill text-danger me-2"></i>Playing Philosophy</h6>
+    </div>
+    <div class="card-body">
+      <p class="mb-0 text-body lh-lg">
+        Shelbourne FC Academy is committed to developing technically excellent, tactically intelligent footballers
+        who are brave on the ball and relentless without it. We play a possession-based, attacking style built from
+        the back, with high pressing and fast transitions. Every player, regardless of age group, learns to play
+        the Shelbourne way.
+      </p>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+
+    <!-- Core Principles -->
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header border-bottom">
+          <h6 class="mb-0 fw-semibold"><i class="bi bi-bullseye text-danger me-2"></i>Core Principles</h6>
+        </div>
+        <div class="card-body">
+          @for (p of corePrinciples; track p.title) {
+            <div class="p-3 rounded bg-light mb-2">
+              <div class="fw-semibold small">{{ p.title }}</div>
+              <div class="text-muted" style="font-size:0.8rem;margin-top:2px">{{ p.desc }}</div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Development Values -->
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header border-bottom">
+          <h6 class="mb-0 fw-semibold"><i class="bi bi-people-fill text-danger me-2"></i>Development Values</h6>
+        </div>
+        <div class="card-body">
+          @for (v of tags.values; track v.id) {
+            <div class="d-flex align-items-center gap-3 p-3 rounded bg-light mb-2">
+              <span class="badge rounded-circle bg-danger p-1">&nbsp;</span>
+              <span class="fw-semibold small flex-grow-1">{{ v.label }}</span>
+              <button
+                class="btn btn-sm btn-outline-secondary py-0 px-2"
+                style="font-size:0.75rem"
+                (click)="copyTag(v.id)"
+              >
+                <i [class]="'bi me-1 ' + (isCopied(v.id) ? 'bi-check-lg text-success' : 'bi-tag')"></i>Tag
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Non-Negotiables -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header border-bottom">
+      <h6 class="mb-0 fw-semibold"><i class="bi bi-exclamation-circle-fill text-danger me-2"></i>Non-Negotiables</h6>
+      <small class="text-muted">Standards that apply to every player, every session, every game</small>
+    </div>
+    <div class="card-body">
+      <div class="row g-2">
+        @for (item of nonNegotiables; track item) {
+          <div class="col-md-6">
+            <div class="d-flex align-items-start gap-2 p-3 rounded border border-danger border-opacity-25 bg-danger bg-opacity-10">
+              <i class="bi bi-dot text-danger fs-5 flex-shrink-0" style="margin-top:-2px"></i>
+              <span class="small">{{ item }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+}
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- 2. GAME MODEL                                                              -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+@if (activeTab() === 'game-model') {
+
+  <div class="alert alert-light border mb-4 small">
+    <strong>Shelbourne FC Game Model</strong> — Organised by phase of play. Each principle includes tactical
+    behaviours, coaching language, and age-specific adaptation notes. Principles can be tagged to sessions and IDPs.
+  </div>
+
+  @for (phase of phases; track phase.id) {
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header border-bottom d-flex align-items-center gap-2">
+        <i [class]="'bi ' + phase.iconClass + ' ' + phase.colorClass + ' fs-5'"></i>
+        <h6 class="mb-0 fw-semibold">{{ phase.title }}</h6>
+        <span class="badge text-bg-secondary ms-auto">{{ phase.principles.length }} principles</span>
+      </div>
+      <div class="card-body p-0">
+        @for (principle of phase.principles; let i = $index; track principle.title) {
+          <div class="border-bottom last-no-border">
+            <!-- Accordion header -->
+            <button
+              class="accordion-toggle btn btn-link text-start w-100 p-3 text-decoration-none text-body d-flex align-items-center gap-2"
+              (click)="togglePrinciple(phase.id + '-' + i)"
+            >
+              <span class="dot" [class]="phase.bgClass"></span>
+              <span class="fw-semibold small flex-grow-1">{{ principle.title }}</span>
+              <span class="badge text-bg-light border text-muted me-2" style="font-size:0.7rem">
+                <i class="bi bi-tag me-1"></i>Taggable
+              </span>
+              <i [class]="'bi ' + (isExpanded(phase.id + '-' + i) ? 'bi-chevron-up' : 'bi-chevron-down') + ' text-muted'"></i>
+            </button>
+
+            <!-- Accordion body -->
+            @if (isExpanded(phase.id + '-' + i)) {
+              <div class="px-4 pb-4">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <div class="p-3 rounded bg-light">
+                      <div class="text-muted mb-1" style="font-size:0.7rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase">
+                        Tactical Behaviours
+                      </div>
+                      <p class="mb-0 small">{{ principle.behaviour }}</p>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="p-3 rounded bg-light">
+                      <div class="text-muted mb-1" style="font-size:0.7rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase">
+                        Coaching Language
+                      </div>
+                      <p class="mb-0 small fst-italic">{{ principle.language }}</p>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <div class="text-muted mb-2" style="font-size:0.7rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase">
+                      Age-Specific Adaptations
+                    </div>
+                    <div class="row g-2">
+                      <div class="col-6 col-md-3">
+                        <div class="p-2 rounded border age-note-card" [class]="'border-' + phase.bgClass.replace('bg-','') + ' bg-opacity-10 ' + phase.bgClass">
+                          <div class="fw-bold" style="font-size:0.75rem">U14</div>
+                          <div class="text-muted" style="font-size:0.75rem">{{ principle.ageNotes.U14 }}</div>
+                        </div>
+                      </div>
+                      <div class="col-6 col-md-3">
+                        <div class="p-2 rounded border age-note-card" [class]="'border-' + phase.bgClass.replace('bg-','') + ' bg-opacity-10 ' + phase.bgClass">
+                          <div class="fw-bold" style="font-size:0.75rem">U15</div>
+                          <div class="text-muted" style="font-size:0.75rem">{{ principle.ageNotes.U15 }}</div>
+                        </div>
+                      </div>
+                      <div class="col-6 col-md-3">
+                        <div class="p-2 rounded border age-note-card" [class]="'border-' + phase.bgClass.replace('bg-','') + ' bg-opacity-10 ' + phase.bgClass">
+                          <div class="fw-bold" style="font-size:0.75rem">U17</div>
+                          <div class="text-muted" style="font-size:0.75rem">{{ principle.ageNotes.U17 }}</div>
+                        </div>
+                      </div>
+                      <div class="col-6 col-md-3">
+                        <div class="p-2 rounded border age-note-card" [class]="'border-' + phase.bgClass.replace('bg-','') + ' bg-opacity-10 ' + phase.bgClass">
+                          <div class="fw-bold" style="font-size:0.75rem">U19</div>
+                          <div class="text-muted" style="font-size:0.75rem">{{ principle.ageNotes.U19 }}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+}
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- 3. DEVELOPMENT FRAMEWORK                                                   -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+@if (activeTab() === 'development') {
+
+  <div class="alert alert-light border mb-4 small">
+    <strong>Development Framework</strong> — Age-group expectations across the five development pillars. This
+    framework guides IDP objectives, session planning focus, and coaching priorities at each stage of the pathway.
+  </div>
+
+  @for (ag of framework; track ag.ageGroup) {
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header border-bottom d-flex align-items-center gap-3">
+        <span class="badge fs-6 px-3 py-2" [class]="ag.badgeClass">{{ ag.ageGroup }}</span>
+        <div>
+          <h6 class="mb-0 fw-semibold">{{ ag.title }}</h6>
+          <small class="text-muted">5 development pillars</small>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          @for (f of ag.focus; track f.pillar) {
+            <div class="col-md-6 col-lg-4">
+              <div class="p-3 rounded bg-light h-100">
+                <span class="badge mb-2" [class]="pillarBadgeClass(f.pillar)">{{ f.pillar }}</span>
+                <p class="mb-0 text-muted" style="font-size:0.8rem;line-height:1.5">{{ f.description }}</p>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+}
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- 4. ALIGNMENT TAGS                                                          -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+@if (activeTab() === 'tags') {
+
+  <div class="alert alert-light border mb-4 small">
+    <strong>Alignment Tag System</strong> — Every principle, pillar, and value defined in this Methodology Hub is
+    available as a selectable tag. Tags can be applied to sessions in Session Planning and to objectives in
+    Individual Development Plans, ensuring alignment with the academy's methodology.
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-header border-bottom">
+      <h6 class="mb-0 fw-semibold"><i class="bi bi-tags-fill text-danger me-2"></i>All Available Tags</h6>
+      <small class="text-muted">{{ allTags.length }} tags available for Session Planning and IDP alignment</small>
+    </div>
+    <div class="card-body">
+
+      <!-- Game Model Principles -->
+      <div class="mb-4">
+        <h6 class="fw-semibold mb-3">
+          <i class="bi bi-bullseye text-danger me-2"></i>Game Model Principles
+        </h6>
+        <div class="d-flex flex-wrap gap-2">
+          @for (tag of tags.principles; track tag.id) {
+            <button
+              class="btn btn-sm btn-outline-secondary tag-btn"
+              [class.tag-copied]="isCopied(tag.id)"
+              (click)="copyTag(tag.id)"
+            >
+              <i [class]="'bi me-1 ' + (isCopied(tag.id) ? 'bi-check-lg text-success' : 'bi-tag')"></i>
+              {{ tag.label }}
+              <span class="text-muted ms-1">· {{ tag.category }}</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- Development Pillars -->
+      <div class="mb-4">
+        <h6 class="fw-semibold mb-3">
+          <i class="bi bi-layers-fill text-danger me-2"></i>Development Pillars
+        </h6>
+        <div class="d-flex flex-wrap gap-2">
+          @for (tag of tags.developmentPillars; track tag.id) {
+            <button
+              class="btn btn-sm tag-btn"
+              [class]="'btn-outline-secondary ' + pillarTagClass(tag.label)"
+              [class.tag-copied]="isCopied(tag.id)"
+              (click)="copyTag(tag.id)"
+            >
+              <i [class]="'bi me-1 ' + (isCopied(tag.id) ? 'bi-check-lg text-success' : 'bi-tag')"></i>
+              {{ tag.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- Academy Values -->
+      <div class="mb-4">
+        <h6 class="fw-semibold mb-3">
+          <i class="bi bi-shield-fill text-danger me-2"></i>Academy Values
+        </h6>
+        <div class="d-flex flex-wrap gap-2">
+          @for (tag of tags.values; track tag.id) {
+            <button
+              class="btn btn-sm btn-outline-danger tag-btn"
+              [class.tag-copied]="isCopied(tag.id)"
+              (click)="copyTag(tag.id)"
+            >
+              <i [class]="'bi me-1 ' + (isCopied(tag.id) ? 'bi-check-lg text-success' : 'bi-tag')"></i>
+              {{ tag.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- How Tags Work -->
+      <div class="p-3 rounded bg-light">
+        <h6 class="fw-semibold mb-3">How Tags Work</h6>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="d-flex gap-2">
+              <i class="bi bi-dot text-danger fs-5 flex-shrink-0" style="margin-top:-4px"></i>
+              <p class="small text-muted mb-0">
+                <strong class="text-body">Session Planning</strong> — When creating a session, select methodology
+                tags to align the session with specific principles from the game model.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="d-flex gap-2">
+              <i class="bi bi-dot text-danger fs-5 flex-shrink-0" style="margin-top:-4px"></i>
+              <p class="small text-muted mb-0">
+                <strong class="text-body">IDPs</strong> — When defining development objectives, tag them with
+                relevant pillars and principles to ensure individual plans align with the academy's methodology.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+}

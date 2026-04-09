@@ -1,1 +1,163 @@
-<p>planning works!</p>
+<div class="schedule-page">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────────── -->
+  <div class="schedule-header">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <h5 class="mb-0 fw-semibold">Weekly Schedule</h5>
+      <span class="week-label">{{ weekLabel() }}</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      @if (!isCurrentWeek()) {
+        <button class="btn btn-sm btn-outline-secondary" (click)="goToday()">Today</button>
+      }
+      <div class="btn-group btn-group-sm">
+        <button class="btn btn-outline-secondary" (click)="prevWeek()">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        <button class="btn btn-outline-secondary" (click)="nextWeek()">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Filters + Stats bar ────────────────────────────────────────────────── -->
+  <div class="schedule-toolbar">
+    <!-- Squad filter pills -->
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <button
+        class="squad-pill"
+        [class.active]="squadFilter() === 'all'"
+        (click)="setSquadFilter('all')"
+      >All Squads</button>
+      @for (squad of squads(); track squad.id) {
+        <button
+          class="squad-pill"
+          [class.active]="squadFilter() === squad.id"
+          (click)="setSquadFilter(squad.id)"
+        >{{ squad.name }}</button>
+      }
+    </div>
+
+    <!-- Stats -->
+    <div class="d-flex align-items-center gap-3 flex-shrink-0">
+      <div class="stat-chip">
+        <span class="stat-chip-value">{{ stats().total }}</span>
+        <span class="stat-chip-label">Sessions</span>
+      </div>
+      <div class="stat-chip type-training">
+        <span class="stat-chip-value">{{ stats().training }}</span>
+        <span class="stat-chip-label">Training</span>
+      </div>
+      <div class="stat-chip type-match">
+        <span class="stat-chip-value">{{ stats().match }}</span>
+        <span class="stat-chip-label">Matches</span>
+      </div>
+      <div class="stat-chip type-recovery">
+        <span class="stat-chip-value">{{ stats().recovery }}</span>
+        <span class="stat-chip-label">Recovery</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Body ───────────────────────────────────────────────────────────────── -->
+  <div class="schedule-body">
+    @if (loading()) {
+      <div class="text-center py-5 text-muted">
+        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+        Loading…
+      </div>
+    } @else {
+      @for (day of days(); track day.date) {
+        <div class="day-row">
+
+          <!-- Day label -->
+          <div class="day-label">
+            <span class="day-short">{{ day.label }}</span>
+            <span class="day-full text-muted">{{ day.full.slice(4) }}</span>
+          </div>
+
+          <!-- Sessions -->
+          <div class="day-sessions">
+            @for (entry of dayEntries(day.date); track entry.id) {
+              <div class="entry-card type-{{ entry.type }}">
+                <div class="entry-squad">{{ squadName(entry.squadId) }}</div>
+                <div class="entry-title">{{ entry.title }}</div>
+                <button class="entry-delete" (click)="deleteEntry(entry.id)" title="Remove">
+                  <i class="bi bi-x"></i>
+                </button>
+              </div>
+            }
+            <button class="add-btn" (click)="openModal(day.date)">
+              <i class="bi bi-plus"></i>
+            </button>
+          </div>
+
+        </div>
+      }
+    }
+  </div>
+
+</div>
+
+<!-- ── Add Entry Modal ────────────────────────────────────────────────────── -->
+@if (showModal()) {
+  <div class="modal-overlay" (click)="closeModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+
+      <div class="modal-card-header">
+        <h6 class="mb-0">Add Session</h6>
+        <button class="btn-close btn-close-white btn-close-sm" (click)="closeModal()"></button>
+      </div>
+
+      <div class="modal-card-body">
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Squad</label>
+          <select class="form-select form-select-sm" [ngModel]="modalSquad()" (ngModelChange)="modalSquad.set($event)">
+            @for (squad of squads(); track squad.id) {
+              <option [value]="squad.id">{{ squad.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Session Title</label>
+          <input
+            class="form-control form-control-sm"
+            placeholder="e.g. Pressing Patterns"
+            [ngModel]="modalTitle()"
+            (ngModelChange)="modalTitle.set($event)"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Type</label>
+          <div class="d-flex gap-2 flex-wrap">
+            @for (et of entryTypes; track et.value) {
+              <button
+                class="type-pill type-{{ et.value }}"
+                [class.selected]="modalType() === et.value"
+                (click)="modalType.set(et.value)"
+              >{{ et.label }}</button>
+            }
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-card-footer">
+        <button class="btn btn-sm btn-outline-secondary" (click)="closeModal()">Cancel</button>
+        <button
+          class="btn btn-sm btn-primary"
+          [disabled]="saving() || !modalTitle().trim() || !modalSquad()"
+          (click)="saveEntry()"
+        >
+          @if (saving()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+          Add
+        </button>
+      </div>
+
+    </div>
+  </div>
+}

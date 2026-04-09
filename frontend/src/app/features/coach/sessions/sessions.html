@@ -1,1 +1,969 @@
-<p>sessions works!</p>
+@if (loading()) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading…</span></div>
+  </div>
+} @else if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+} @else {
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     LIST VIEW
+══════════════════════════════════════════════════════════════════════════ -->
+@if (currentView() === 'list') {
+<div class="sp-page">
+
+  <!-- Page Header -->
+  <div class="sp-page-header">
+    <div>
+      <h1 class="sp-page-title">Session Planning</h1>
+      <p class="sp-page-subtitle">Periodisation, organisation, and long-term planning aligned with the club's methodology</p>
+    </div>
+    <button class="sp-btn sp-btn-primary" (click)="openCreate()">
+      <span class="sp-btn-icon">+</span> Create New Plan
+    </button>
+  </div>
+
+  <!-- Info Banner -->
+  <div class="sp-info-banner">
+    <div class="sp-info-banner-icon">📋</div>
+    <div>
+      <div class="sp-info-banner-title">Coach-Led Planning &amp; Periodisation</div>
+      <p class="sp-info-banner-text">Plan individual sessions, weekly schedules, multi-week training blocks, or full season plans. All plans are scoped to your assigned squad and linked to your club's methodology framework.</p>
+    </div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="sp-stats-grid">
+    <div class="sp-stat-card">
+      <div class="sp-stat-icon sp-icon-red">📅</div>
+      <div class="sp-stat-content">
+        <div class="sp-stat-value">{{ statsSessionCount() }}</div>
+        <div class="sp-stat-label">Sessions</div>
+      </div>
+    </div>
+    <div class="sp-stat-card">
+      <div class="sp-stat-icon sp-icon-blue">📊</div>
+      <div class="sp-stat-content">
+        <div class="sp-stat-value">{{ statsWeeklyCount() }}</div>
+        <div class="sp-stat-label">Weekly Plans</div>
+      </div>
+    </div>
+    <div class="sp-stat-card">
+      <div class="sp-stat-icon sp-icon-purple">🎯</div>
+      <div class="sp-stat-content">
+        <div class="sp-stat-value">{{ statsBlockCount() }}</div>
+        <div class="sp-stat-label">Multi-Week Blocks</div>
+      </div>
+    </div>
+    <div class="sp-stat-card">
+      <div class="sp-stat-icon sp-icon-green">📈</div>
+      <div class="sp-stat-content">
+        <div class="sp-stat-value">{{ statsActiveCount() }}</div>
+        <div class="sp-stat-label">Active Plans</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Row -->
+  <div class="sp-filters-row">
+    <div class="sp-tabs">
+      <button
+        class="sp-tab"
+        [class.sp-tab-active]="listTab() === 'active'"
+        (click)="listTab.set('active')"
+      >Active &amp; Drafts ({{ activeTabCount() }})</button>
+      <button
+        class="sp-tab"
+        [class.sp-tab-active]="listTab() === 'archived'"
+        (click)="listTab.set('archived')"
+      >Archived ({{ archivedTabCount() }})</button>
+    </div>
+    <div class="sp-filter-controls">
+      <div class="sp-search-wrap">
+        <span class="sp-search-icon">🔍</span>
+        <input
+          class="sp-search-input"
+          placeholder="Search plans…"
+          [value]="listSearch()"
+          (input)="listSearch.set($any($event.target).value)"
+        />
+      </div>
+      <select
+        class="sp-select"
+        [ngModel]="filterType()"
+        (ngModelChange)="filterType.set($event)"
+      >
+        <option value="all">All Types</option>
+        @for (t of planTypes; track t.value) {
+          <option [value]="t.value">{{ t.label }}</option>
+        }
+      </select>
+      <select
+        class="sp-select"
+        [ngModel]="filterPhase()"
+        (ngModelChange)="filterPhase.set($event)"
+      >
+        <option value="all">All Phases</option>
+        @for (p of competitionPhases; track p.value) {
+          <option [value]="p.value">{{ p.label }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- Plans List -->
+  <div class="sp-plans-list">
+    @if (filteredPlans().length === 0) {
+      <div class="sp-empty-state">No plans match your filters.</div>
+    }
+    @for (plan of filteredPlans(); track plan.id) {
+      <div class="sp-plan-card" (click)="selectPlan(plan.id)">
+        <div class="sp-plan-card-top">
+          <div class="sp-plan-badges">
+            <span class="sp-type-badge sp-type-{{ plan.type }}">{{ typeLabel(plan.type) }}</span>
+            <span class="sp-status-badge sp-status-{{ plan.status }}">{{ plan.status }}</span>
+          </div>
+          <div class="sp-plan-actions" (click)="$event.stopPropagation()">
+            <button class="sp-icon-btn" title="Duplicate" (click)="duplicatePlan(plan.id)">⧉</button>
+            @if (plan.status !== 'archived') {
+              <button class="sp-icon-btn" title="Archive" (click)="archivePlan(plan.id)">⬇</button>
+            }
+            <button class="sp-icon-btn sp-icon-btn-danger" title="Delete" (click)="deletePlan(plan.id)">🗑</button>
+          </div>
+        </div>
+        <div class="sp-plan-title">{{ plan.title }}</div>
+        <div class="sp-plan-meta">
+          @if (plan.competitionPhase) {
+            <span>{{ phaseLabel(plan.competitionPhase) }}</span>
+            <span class="sp-meta-dot">·</span>
+          }
+          <span>{{ formatDate(plan.createdAt) }}</span>
+        </div>
+      </div>
+    }
+  </div>
+
+</div>
+}<!-- end list view -->
+
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     CREATE VIEW
+══════════════════════════════════════════════════════════════════════════ -->
+@if (currentView() === 'create') {
+<div class="sp-form-page">
+
+  <!-- Back + Title -->
+  <div class="sp-form-header">
+    <button class="sp-back-btn" (click)="goBack()">← Back to Plans</button>
+    <h2 class="sp-form-title">Create New Plan</h2>
+  </div>
+
+  <div class="sp-form-body">
+
+    <!-- Basic Info -->
+    <div class="sp-form-section">
+      <div class="sp-form-grid-4">
+        <div class="sp-field">
+          <label class="sp-label">Plan Type</label>
+          <select
+            class="sp-select-full"
+            [ngModel]="createType()"
+            (ngModelChange)="onCreateTypeChange($event)"
+          >
+            @for (t of planTypes; track t.value) {
+              <option [value]="t.value">{{ t.label }}</option>
+            }
+          </select>
+        </div>
+        <div class="sp-field">
+          <label class="sp-label">Status</label>
+          <select class="sp-select-full" [ngModel]="createStatus()" (ngModelChange)="createStatus.set($event)">
+            <option value="draft">Draft</option>
+            <option value="active">Active</option>
+          </select>
+        </div>
+        <div class="sp-field">
+          <label class="sp-label">Competition Phase</label>
+          <select class="sp-select-full" [ngModel]="createCompPhase()" (ngModelChange)="createCompPhase.set($event)">
+            <option value="">— select —</option>
+            @for (p of competitionPhases; track p.value) {
+              <option [value]="p.value">{{ p.label }}</option>
+            }
+          </select>
+        </div>
+        <div class="sp-field">
+          <label class="sp-label">Tags <span class="sp-label-hint">(comma-separated)</span></label>
+          <input
+            class="sp-input"
+            placeholder="e.g. pressing, transitions"
+            [value]="createTags()"
+            (input)="createTags.set($any($event.target).value)"
+          />
+        </div>
+      </div>
+      <div class="sp-field sp-field-full sp-mt-3">
+        <label class="sp-label">Plan Title</label>
+        <input
+          class="sp-input"
+          placeholder="Give this plan a name…"
+          [value]="createTitle()"
+          (input)="createTitle.set($any($event.target).value)"
+        />
+      </div>
+    </div>
+
+    <!-- ── Single Session ─────────────────────────────────────────────────── -->
+    @if (createType() === 'single-session') {
+      <div class="sp-form-section">
+        <h3 class="sp-section-title">Session Details</h3>
+        <div class="sp-form-grid-2">
+          <div class="sp-field">
+            <label class="sp-label">Date</label>
+            <input type="date" class="sp-input" [value]="createSingleData().date"
+              (change)="createSingleData.update(d => ({...d, date: $any($event.target).value}))" />
+          </div>
+          <div class="sp-field">
+            <label class="sp-label">Session Theme</label>
+            <input class="sp-input" placeholder="e.g. High Press, Transition…"
+              [value]="createSingleData().theme"
+              (input)="createSingleData.update(d => ({...d, theme: $any($event.target).value}))" />
+          </div>
+        </div>
+
+        <!-- IDP Links -->
+        <div class="sp-field sp-mt-3">
+          <label class="sp-label">IDP Links</label>
+          <div class="sp-input-row">
+            <input class="sp-input" placeholder="Link to an IDP objective…"
+              [value]="createIdpInput()"
+              (input)="createIdpInput.set($any($event.target).value)"
+              (keyup.enter)="addCreateIdpLink()" />
+            <button class="sp-btn sp-btn-outline" (click)="addCreateIdpLink()">Add</button>
+          </div>
+          <div class="sp-badge-list sp-mt-2">
+            @for (link of createSingleData().idpLinks; track $index; let li = $index) {
+              <span class="sp-badge sp-badge-blue">
+                {{ link }}
+                <button class="sp-badge-remove" (click)="removeCreateIdpLink(li)">×</button>
+              </span>
+            }
+          </div>
+        </div>
+
+        <!-- Phases -->
+        <h4 class="sp-subsection-title sp-mt-4">Session Phases</h4>
+        <div class="sp-phases-list">
+          @for (phase of createSingleData().phases; track $index; let pi = $index) {
+            <div class="sp-phase-card">
+              <div class="sp-phase-header">
+                <input class="sp-input sp-phase-name" placeholder="Phase name"
+                  [value]="phase.name"
+                  (input)="setCreatePhaseField(pi, 'name', $any($event.target).value)" />
+                <div class="sp-phase-duration">
+                  <input type="number" class="sp-input sp-duration-input" min="1"
+                    [value]="phase.duration"
+                    (input)="setCreatePhaseField(pi, 'duration', +$any($event.target).value)" />
+                  <span class="sp-duration-label">min</span>
+                </div>
+              </div>
+              <div class="sp-phase-body">
+                <div class="sp-field">
+                  <label class="sp-label">Description</label>
+                  <textarea class="sp-textarea" rows="2" placeholder="Describe the activity…"
+                    [value]="phase.description"
+                    (input)="setCreatePhaseField(pi, 'description', $any($event.target).value)"></textarea>
+                </div>
+                <div class="sp-form-grid-2">
+                  <div class="sp-field">
+                    <label class="sp-label">Coaching Points</label>
+                    <div class="sp-input-row sp-mb-1">
+                      <input class="sp-input" placeholder="Add a point…"
+                        [value]="createCpInput()[pi] ?? ''"
+                        (input)="createCpInput.update(a => a.map((v,i) => i===pi ? $any($event.target).value : v))"
+                        (keyup.enter)="addCreateCp(pi)" />
+                      <button class="sp-btn sp-btn-outline sp-btn-sm" (click)="addCreateCp(pi)">+</button>
+                    </div>
+                    <ul class="sp-bullet-list">
+                      @for (pt of phase.coachingPoints; track $index; let ci = $index) {
+                        <li class="sp-bullet-item">
+                          {{ pt }}
+                          <button class="sp-remove-btn" (click)="removeCreateCp(pi, ci)">×</button>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                  <div class="sp-field">
+                    <label class="sp-label">Equipment</label>
+                    <div class="sp-input-row sp-mb-1">
+                      <input class="sp-input" placeholder="Add item…"
+                        [value]="createEqInput()[pi] ?? ''"
+                        (input)="createEqInput.update(a => a.map((v,i) => i===pi ? $any($event.target).value : v))"
+                        (keyup.enter)="addCreateEq(pi)" />
+                      <button class="sp-btn sp-btn-outline sp-btn-sm" (click)="addCreateEq(pi)">+</button>
+                    </div>
+                    <ul class="sp-bullet-list">
+                      @for (eq of phase.equipment; track $index; let ei = $index) {
+                        <li class="sp-bullet-item">
+                          {{ eq }}
+                          <button class="sp-remove-btn" (click)="removeCreateEq(pi, ei)">×</button>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ── Weekly Plan ─────────────────────────────────────────────────────── -->
+    @if (createType() === 'weekly-plan') {
+      <div class="sp-form-section">
+        <h3 class="sp-section-title">Weekly Schedule</h3>
+        <div class="sp-week-table-wrap">
+          <table class="sp-week-table">
+            <thead>
+              <tr>
+                <th>Day</th><th>Type</th><th>Title</th><th>Theme</th><th>Intensity</th><th>Match Proximity</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (day of createWeeklyData().days; track $index; let di = $index) {
+                <tr>
+                  <td class="sp-day-label">{{ day.day }}</td>
+                  <td>
+                    <select class="sp-select-sm" [ngModel]="day.type" (ngModelChange)="setCreateDayField(di, 'type', $event)">
+                      @for (dt of dayTypes; track dt) { <option [value]="dt">{{ dt }}</option> }
+                    </select>
+                  </td>
+                  <td><input class="sp-input-sm" placeholder="Title…" [value]="day.title" (input)="setCreateDayField(di, 'title', $any($event.target).value)" /></td>
+                  <td><input class="sp-input-sm" placeholder="Theme…" [value]="day.theme" (input)="setCreateDayField(di, 'theme', $any($event.target).value)" /></td>
+                  <td>
+                    <select class="sp-select-sm" [ngModel]="day.intensity" (ngModelChange)="setCreateDayField(di, 'intensity', $event)">
+                      @for (i of intensities; track i) { <option [value]="i">{{ i }}</option> }
+                    </select>
+                  </td>
+                  <td><input class="sp-input-sm" placeholder="MD-3…" [value]="day.matchProximity" (input)="setCreateDayField(di, 'matchProximity', $any($event.target).value)" /></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- ── Multi-Week Block ────────────────────────────────────────────────── -->
+    @if (createType() === 'multi-week-block') {
+      <div class="sp-form-section">
+        <h3 class="sp-section-title">Training Block</h3>
+        @for (week of createMultiData().weeks; track $index; let wi = $index) {
+          <div class="sp-week-block">
+            <div class="sp-week-block-header">
+              <span class="sp-week-label-text">Week {{ wi + 1 }}</span>
+              <input class="sp-input sp-week-label-input" placeholder="Week theme…"
+                [value]="week.label"
+                (input)="setCreateWeekLabel(wi, $any($event.target).value)" />
+              @if (createMultiData().weeks.length > 1) {
+                <button class="sp-icon-btn sp-icon-btn-danger" (click)="removeCreateWeek(wi)">🗑</button>
+              }
+            </div>
+            <div class="sp-week-table-wrap">
+              <table class="sp-week-table">
+                <thead><tr><th>Day</th><th>Type</th><th>Title</th><th>Intensity</th></tr></thead>
+                <tbody>
+                  @for (day of week.days; track $index; let di = $index) {
+                    <tr>
+                      <td class="sp-day-label">{{ day.day }}</td>
+                      <td>
+                        <select class="sp-select-sm" [ngModel]="day.type" (ngModelChange)="setCreateWeekDayField(wi, di, 'type', $event)">
+                          @for (dt of dayTypes; track dt) { <option [value]="dt">{{ dt }}</option> }
+                        </select>
+                      </td>
+                      <td><input class="sp-input-sm" placeholder="Title…" [value]="day.title" (input)="setCreateWeekDayField(wi, di, 'title', $any($event.target).value)" /></td>
+                      <td>
+                        <select class="sp-select-sm" [ngModel]="day.intensity" (ngModelChange)="setCreateWeekDayField(wi, di, 'intensity', $event)">
+                          @for (i of intensities; track i) { <option [value]="i">{{ i }}</option> }
+                        </select>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+        <button class="sp-btn sp-btn-outline sp-mt-3" (click)="addCreateWeek()">+ Add Week</button>
+      </div>
+    }
+
+    <!-- ── Season Plan ─────────────────────────────────────────────────────── -->
+    @if (createType() === 'season-plan') {
+      <div class="sp-form-section">
+        <h3 class="sp-section-title">Season Phases</h3>
+        @for (sp of createSeasonData().phases; track $index; let spi = $index) {
+          <div class="sp-season-phase">
+            <div class="sp-season-phase-header">
+              <span class="sp-week-label-text">Phase {{ spi + 1 }}</span>
+              @if (createSeasonData().phases.length > 1) {
+                <button class="sp-icon-btn sp-icon-btn-danger" (click)="removeCreateSeasonPhase(spi)">🗑</button>
+              }
+            </div>
+            <div class="sp-form-grid-3">
+              <div class="sp-field">
+                <label class="sp-label">Phase Name</label>
+                <input class="sp-input" placeholder="e.g. Pre-Season" [value]="sp.name"
+                  (input)="setCreateSeasonField(spi, 'name', $any($event.target).value)" />
+              </div>
+              <div class="sp-field">
+                <label class="sp-label">Start Date</label>
+                <input type="date" class="sp-input" [value]="sp.startDate"
+                  (change)="setCreateSeasonField(spi, 'startDate', $any($event.target).value)" />
+              </div>
+              <div class="sp-field">
+                <label class="sp-label">End Date</label>
+                <input type="date" class="sp-input" [value]="sp.endDate"
+                  (change)="setCreateSeasonField(spi, 'endDate', $any($event.target).value)" />
+              </div>
+            </div>
+            <div class="sp-form-grid-2 sp-mt-2">
+              <div class="sp-field">
+                <label class="sp-label">Focus</label>
+                <input class="sp-input" placeholder="Phase focus…" [value]="sp.focus"
+                  (input)="setCreateSeasonField(spi, 'focus', $any($event.target).value)" />
+              </div>
+              <div class="sp-field">
+                <label class="sp-label">Weekly Structure Summary</label>
+                <input class="sp-input" placeholder="e.g. 3 sessions + 1 match"
+                  [value]="sp.weeklyStructure"
+                  (input)="setCreateSeasonField(spi, 'weeklyStructure', $any($event.target).value)" />
+              </div>
+            </div>
+          </div>
+        }
+        <button class="sp-btn sp-btn-outline sp-mt-3" (click)="addCreateSeasonPhase()">+ Add Phase</button>
+      </div>
+    }
+
+  </div><!-- end form-body -->
+
+  <!-- Form Footer -->
+  <div class="sp-form-footer">
+    <button class="sp-btn sp-btn-ghost" (click)="goBack()">Cancel</button>
+    <button
+      class="sp-btn sp-btn-primary"
+      [disabled]="!createTitle().trim() || saving()"
+      (click)="submitCreate()"
+    >{{ saving() ? 'Creating…' : 'Create Plan' }}</button>
+  </div>
+
+</div>
+}<!-- end create view -->
+
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     DETAIL VIEW
+══════════════════════════════════════════════════════════════════════════ -->
+@if (currentView() === 'detail' && selectedPlan()) {
+<div class="sp-detail-page">
+
+  <!-- Detail Header -->
+  <div class="sp-detail-header">
+    <div class="sp-detail-header-top">
+      <button class="sp-back-btn" (click)="goBack()">← Back to Plans</button>
+      <div class="sp-detail-actions">
+        <select
+          class="sp-select"
+          [ngModel]="editStatus()"
+          (ngModelChange)="editStatus.set($event); markDirty()"
+        >
+          <option value="draft">Draft</option>
+          <option value="active">Active</option>
+        </select>
+        <button class="sp-icon-btn" title="Duplicate" (click)="duplicatePlan(selectedPlan()!.id)">⧉ Duplicate</button>
+        @if (selectedPlan()!.status !== 'archived') {
+          <button class="sp-icon-btn" title="Archive" (click)="archivePlan(selectedPlan()!.id)">⬇ Archive</button>
+        }
+        <button class="sp-icon-btn sp-icon-btn-danger" (click)="deletePlan(selectedPlan()!.id)">🗑 Delete</button>
+        @if (editDirty()) {
+          <button class="sp-btn sp-btn-primary sp-btn-sm" [disabled]="saving()" (click)="savePlan()">
+            {{ saving() ? 'Saving…' : 'Save Changes' }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="sp-detail-title-row">
+      <input
+        class="sp-title-input"
+        placeholder="Plan title"
+        [value]="editTitle()"
+        (input)="editTitle.set($any($event.target).value); markDirty()"
+      />
+    </div>
+
+    <div class="sp-detail-meta-row">
+      <span class="sp-type-badge sp-type-{{ selectedPlan()!.type }}">{{ typeLabel(selectedPlan()!.type) }}</span>
+      <span class="sp-status-badge sp-status-{{ selectedPlan()!.status }}">{{ selectedPlan()!.status }}</span>
+      @if (selectedPlan()!.competitionPhase) {
+        <span class="sp-meta-text">{{ phaseLabel(selectedPlan()!.competitionPhase!) }}</span>
+      }
+      <span class="sp-meta-text">Created {{ formatDate(selectedPlan()!.createdAt) }}</span>
+    </div>
+
+    <!-- Tags row -->
+    <div class="sp-tags-row">
+      @for (tag of editTags(); track $index; let ti = $index) {
+        <span class="sp-badge sp-badge-secondary">
+          {{ tag }}
+          <button class="sp-badge-remove" (click)="removeEditTag(ti)">×</button>
+        </span>
+      }
+      <div class="sp-input-row sp-tag-add">
+        <input
+          class="sp-input sp-input-sm"
+          style="width:130px"
+          placeholder="Add tag…"
+          [value]="editNewTag()"
+          (input)="editNewTag.set($any($event.target).value)"
+          (keyup.enter)="addEditTag()"
+        />
+        <button class="sp-btn sp-btn-outline sp-btn-sm" (click)="addEditTag()">+</button>
+      </div>
+    </div>
+
+    <!-- Phase selector -->
+    <div class="sp-phase-row">
+      <span class="sp-label">Competition Phase:</span>
+      <select
+        class="sp-select"
+        [ngModel]="editCompPhase()"
+        (ngModelChange)="editCompPhase.set($event); markDirty()"
+      >
+        <option value="">— select —</option>
+        @for (p of competitionPhases; track p.value) {
+          <option [value]="p.value">{{ p.label }}</option>
+        }
+      </select>
+    </div>
+
+    <!-- Detail Tabs -->
+    <div class="sp-detail-tabs">
+      <button class="sp-tab" [class.sp-tab-active]="detailTab() === 'overview'" (click)="detailTab.set('overview')">Overview</button>
+      <button class="sp-tab" [class.sp-tab-active]="detailTab() === 'content'" (click)="detailTab.set('content')">Edit Content</button>
+    </div>
+  </div>
+
+  <!-- Detail Body -->
+  <div class="sp-detail-body">
+
+    <!-- ════ OVERVIEW TAB ════ -->
+    @if (detailTab() === 'overview') {
+
+      <!-- Info Grid -->
+      <div class="sp-info-grid">
+        <div class="sp-info-box">
+          <div class="sp-info-box-label">Type</div>
+          <div class="sp-info-box-value">{{ typeLabel(selectedPlan()!.type) }}</div>
+        </div>
+        <div class="sp-info-box">
+          <div class="sp-info-box-label">Status</div>
+          <div class="sp-info-box-value" style="text-transform:capitalize">{{ selectedPlan()!.status }}</div>
+        </div>
+        <div class="sp-info-box">
+          <div class="sp-info-box-label">Phase</div>
+          <div class="sp-info-box-value">{{ selectedPlan()!.competitionPhase ? phaseLabel(selectedPlan()!.competitionPhase!) : '—' }}</div>
+        </div>
+        <div class="sp-info-box">
+          <div class="sp-info-box-label">Created</div>
+          <div class="sp-info-box-value">{{ formatDate(selectedPlan()!.createdAt) }}</div>
+        </div>
+      </div>
+
+      @if (selectedPlan()!.tags?.length) {
+        <div class="sp-overview-section">
+          <div class="sp-overview-label">Tags</div>
+          <div class="sp-badge-list">
+            @for (tag of selectedPlan()!.tags!; track $index) {
+              <span class="sp-badge sp-badge-secondary">{{ tag }}</span>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Single Session Overview -->
+      @if (selectedPlan()!.type === 'single-session' && selectedPlan()!.data) {
+        <div class="sp-overview-section">
+          <h3 class="sp-section-title">Session Overview</h3>
+          <div class="sp-info-grid sp-info-grid-2">
+            <div class="sp-info-box">
+              <div class="sp-info-box-label">Date</div>
+              <div class="sp-info-box-value">{{ formatDate(asSingle(selectedPlan()!.data).date) }}</div>
+            </div>
+            <div class="sp-info-box">
+              <div class="sp-info-box-label">Theme</div>
+              <div class="sp-info-box-value">{{ asSingle(selectedPlan()!.data).theme || '—' }}</div>
+            </div>
+          </div>
+
+          @if (asSingle(selectedPlan()!.data).idpLinks?.length) {
+            <div class="sp-mt-3">
+              <div class="sp-overview-label">IDP Links</div>
+              <div class="sp-badge-list">
+                @for (link of asSingle(selectedPlan()!.data).idpLinks; track $index) {
+                  <span class="sp-badge sp-badge-blue">{{ link }}</span>
+                }
+              </div>
+            </div>
+          }
+
+          <div class="sp-mt-3">
+            <div class="sp-overview-label">Phases</div>
+            <div class="sp-phase-overview-list">
+              @for (phase of asSingle(selectedPlan()!.data).phases; track $index) {
+                <div class="sp-phase-overview-item">
+                  <div>
+                    <div class="sp-phase-overview-name">{{ phase.name }}</div>
+                    @if (phase.description) {
+                      <div class="sp-phase-overview-desc">{{ phase.description }}</div>
+                    }
+                    @if (phase.coachingPoints?.length) {
+                      <ul class="sp-bullet-list sp-mt-1">
+                        @for (pt of phase.coachingPoints; track $index) {
+                          <li>{{ pt }}</li>
+                        }
+                      </ul>
+                    }
+                  </div>
+                  <span class="sp-duration-badge">{{ phase.duration }} min</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Weekly Overview -->
+      @if (selectedPlan()!.type === 'weekly-plan' && selectedPlan()!.data) {
+        <div class="sp-overview-section">
+          <h3 class="sp-section-title">Weekly Overview</h3>
+          <div class="sp-week-table-wrap">
+            <table class="sp-week-table">
+              <thead><tr><th>Day</th><th>Type</th><th>Title</th><th>Theme</th><th>Intensity</th></tr></thead>
+              <tbody>
+                @for (day of asWeekly(selectedPlan()!.data).days; track $index) {
+                  <tr>
+                    <td class="sp-day-label">{{ day.day }}</td>
+                    <td><span class="sp-day-type-badge sp-day-{{ day.type }}">{{ day.type }}</span></td>
+                    <td>{{ day.title || '—' }}</td>
+                    <td>{{ day.theme || '—' }}</td>
+                    <td><span class="sp-intensity sp-intensity-{{ day.intensity }}">{{ day.intensity }}</span></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- Block Overview -->
+      @if (selectedPlan()!.type === 'multi-week-block' && selectedPlan()!.data) {
+        <div class="sp-overview-section">
+          <h3 class="sp-section-title">Block Overview — {{ asMulti(selectedPlan()!.data).weeks.length }} Weeks</h3>
+          <div class="sp-block-weeks">
+            @for (week of asMulti(selectedPlan()!.data).weeks; track $index) {
+              <div class="sp-info-box">
+                <div class="sp-info-box-label">Week {{ $index + 1 }}</div>
+                <div class="sp-info-box-value">{{ week.label || '—' }}</div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Season Overview -->
+      @if (selectedPlan()!.type === 'season-plan' && selectedPlan()!.data) {
+        <div class="sp-overview-section">
+          <h3 class="sp-section-title">Season Phases</h3>
+          <div class="sp-season-phases-overview">
+            @for (sp of asSeason(selectedPlan()!.data).phases; track $index) {
+              <div class="sp-season-phase-card">
+                <div class="sp-season-phase-name">{{ sp.name || 'Phase ' + ($index + 1) }}</div>
+                @if (sp.startDate || sp.endDate) {
+                  <div class="sp-season-phase-dates">{{ formatDate(sp.startDate) }} → {{ formatDate(sp.endDate) }}</div>
+                }
+                @if (sp.focus) {
+                  <div class="sp-season-phase-focus">{{ sp.focus }}</div>
+                }
+                @if (sp.weeklyStructure) {
+                  <div class="sp-season-phase-structure">{{ sp.weeklyStructure }}</div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+    }<!-- end overview tab -->
+
+
+    <!-- ════ CONTENT / EDIT TAB ════ -->
+    @if (detailTab() === 'content' && editData()) {
+
+      <!-- ── Single Session Edit ────────────────────────────────────────────── -->
+      @if (selectedPlan()!.type === 'single-session') {
+        <div class="sp-form-section">
+          <div class="sp-form-grid-2">
+            <div class="sp-field">
+              <label class="sp-label">Date</label>
+              <input type="date" class="sp-input"
+                [value]="asSingle(editData()).date"
+                (change)="setSingleField('date', $any($event.target).value)" />
+            </div>
+            <div class="sp-field">
+              <label class="sp-label">Theme</label>
+              <input class="sp-input" placeholder="Session theme…"
+                [value]="asSingle(editData()).theme"
+                (input)="setSingleField('theme', $any($event.target).value)" />
+            </div>
+          </div>
+
+          <div class="sp-field sp-mt-3">
+            <label class="sp-label">IDP Links</label>
+            <div class="sp-input-row">
+              <input class="sp-input" placeholder="Link to an IDP objective…"
+                [value]="editIdpInput()"
+                (input)="editIdpInput.set($any($event.target).value)"
+                (keyup.enter)="addIdpLink()" />
+              <button class="sp-btn sp-btn-outline" (click)="addIdpLink()">Add</button>
+            </div>
+            <div class="sp-badge-list sp-mt-2">
+              @for (link of asSingle(editData()).idpLinks; track $index; let li = $index) {
+                <span class="sp-badge sp-badge-blue">
+                  {{ link }}
+                  <button class="sp-badge-remove" (click)="removeIdpLink(li)">×</button>
+                </span>
+              }
+            </div>
+          </div>
+
+          <h4 class="sp-subsection-title sp-mt-4">Session Phases</h4>
+          <div class="sp-phases-list">
+            @for (phase of asSingle(editData()).phases; track $index; let pi = $index) {
+              <div class="sp-phase-card">
+                <div class="sp-phase-header">
+                  <input class="sp-input sp-phase-name" placeholder="Phase name"
+                    [value]="phase.name"
+                    (input)="setPhaseField(pi, 'name', $any($event.target).value)" />
+                  <div class="sp-phase-duration">
+                    <input type="number" class="sp-input sp-duration-input" min="1"
+                      [value]="phase.duration"
+                      (input)="setPhaseField(pi, 'duration', +$any($event.target).value)" />
+                    <span class="sp-duration-label">min</span>
+                  </div>
+                </div>
+                <div class="sp-phase-body">
+                  <div class="sp-field">
+                    <label class="sp-label">Description</label>
+                    <textarea class="sp-textarea" rows="2" placeholder="Describe the activity…"
+                      [value]="phase.description"
+                      (input)="setPhaseField(pi, 'description', $any($event.target).value)"></textarea>
+                  </div>
+                  <div class="sp-form-grid-2">
+                    <div class="sp-field">
+                      <label class="sp-label">Coaching Points</label>
+                      <div class="sp-input-row sp-mb-1">
+                        <input class="sp-input" placeholder="Add a point…"
+                          [value]="editCpInput()[pi] ?? ''"
+                          (input)="editCpInput.update(a => a.map((v,i) => i===pi ? $any($event.target).value : v))"
+                          (keyup.enter)="addCoachingPoint(pi)" />
+                        <button class="sp-btn sp-btn-outline sp-btn-sm" (click)="addCoachingPoint(pi)">+</button>
+                      </div>
+                      <ul class="sp-bullet-list">
+                        @for (pt of phase.coachingPoints; track $index; let ci = $index) {
+                          <li class="sp-bullet-item">
+                            {{ pt }}
+                            <button class="sp-remove-btn" (click)="removeCp(pi, ci)">×</button>
+                          </li>
+                        }
+                      </ul>
+                    </div>
+                    <div class="sp-field">
+                      <label class="sp-label">Equipment</label>
+                      <div class="sp-input-row sp-mb-1">
+                        <input class="sp-input" placeholder="Add item…"
+                          [value]="editEqInput()[pi] ?? ''"
+                          (input)="editEqInput.update(a => a.map((v,i) => i===pi ? $any($event.target).value : v))"
+                          (keyup.enter)="addEquipment(pi)" />
+                        <button class="sp-btn sp-btn-outline sp-btn-sm" (click)="addEquipment(pi)">+</button>
+                      </div>
+                      <ul class="sp-bullet-list">
+                        @for (eq of phase.equipment; track $index; let ei = $index) {
+                          <li class="sp-bullet-item">
+                            {{ eq }}
+                            <button class="sp-remove-btn" (click)="removeEq(pi, ei)">×</button>
+                          </li>
+                        }
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- ── Weekly Plan Edit ───────────────────────────────────────────────── -->
+      @if (selectedPlan()!.type === 'weekly-plan') {
+        <div class="sp-form-section">
+          <h3 class="sp-section-title">Weekly Schedule</h3>
+          <div class="sp-week-table-wrap">
+            <table class="sp-week-table">
+              <thead>
+                <tr>
+                  <th>Day</th><th>Type</th><th>Title</th><th>Theme</th><th>Intensity</th><th>Match Proximity</th><th>IDP Objectives</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (day of asWeekly(editData()).days; track $index; let di = $index) {
+                  <tr>
+                    <td class="sp-day-label">{{ day.day }}</td>
+                    <td>
+                      <select class="sp-select-sm" [ngModel]="day.type" (ngModelChange)="setDayField(di, 'type', $event)">
+                        @for (dt of dayTypes; track dt) { <option [value]="dt">{{ dt }}</option> }
+                      </select>
+                    </td>
+                    <td><input class="sp-input-sm" [value]="day.title" (input)="setDayField(di, 'title', $any($event.target).value)" /></td>
+                    <td><input class="sp-input-sm" [value]="day.theme" (input)="setDayField(di, 'theme', $any($event.target).value)" /></td>
+                    <td>
+                      <select class="sp-select-sm" [ngModel]="day.intensity" (ngModelChange)="setDayField(di, 'intensity', $event)">
+                        @for (i of intensities; track i) { <option [value]="i">{{ i }}</option> }
+                      </select>
+                    </td>
+                    <td><input class="sp-input-sm" placeholder="MD-3…" [value]="day.matchProximity" (input)="setDayField(di, 'matchProximity', $any($event.target).value)" /></td>
+                    <td>
+                      <div class="sp-badge-list sp-mb-1">
+                        @for (obj of day.idpObjectives; track $index; let oi = $index) {
+                          <span class="sp-badge sp-badge-blue sp-badge-sm">{{ obj }} <button class="sp-badge-remove" (click)="removeDayObjective(di, oi)">×</button></span>
+                        }
+                      </div>
+                      <div class="sp-input-row">
+                        <input class="sp-input-sm" placeholder="Add objective…"
+                          [value]="editObjInput()[di] ?? ''"
+                          (input)="editObjInput.update(a => a.map((v,i) => i===di ? $any($event.target).value : v))"
+                          (keyup.enter)="addDayObjective(di)" />
+                        <button class="sp-btn sp-btn-outline sp-btn-xs" (click)="addDayObjective(di)">+</button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- ── Multi-Week Block Edit ──────────────────────────────────────────── -->
+      @if (selectedPlan()!.type === 'multi-week-block') {
+        <div class="sp-form-section">
+          <h3 class="sp-section-title">Training Block</h3>
+          @for (week of asMulti(editData()).weeks; track $index; let wi = $index) {
+            <div class="sp-week-block">
+              <div class="sp-week-block-header">
+                <span class="sp-week-label-text">Week {{ wi + 1 }}</span>
+                <input class="sp-input sp-week-label-input" placeholder="Week theme…"
+                  [value]="week.label"
+                  (input)="setWeekLabel(wi, $any($event.target).value)" />
+                @if (asMulti(editData()).weeks.length > 1) {
+                  <button class="sp-icon-btn sp-icon-btn-danger" (click)="removeWeek(wi)">🗑</button>
+                }
+              </div>
+              <div class="sp-week-table-wrap">
+                <table class="sp-week-table">
+                  <thead><tr><th>Day</th><th>Type</th><th>Title</th><th>Intensity</th><th>Match Proximity</th></tr></thead>
+                  <tbody>
+                    @for (day of week.days; track $index; let di = $index) {
+                      <tr>
+                        <td class="sp-day-label">{{ day.day }}</td>
+                        <td>
+                          <select class="sp-select-sm" [ngModel]="day.type" (ngModelChange)="setWeekDayField(wi, di, 'type', $event)">
+                            @for (dt of dayTypes; track dt) { <option [value]="dt">{{ dt }}</option> }
+                          </select>
+                        </td>
+                        <td><input class="sp-input-sm" [value]="day.title" (input)="setWeekDayField(wi, di, 'title', $any($event.target).value)" /></td>
+                        <td>
+                          <select class="sp-select-sm" [ngModel]="day.intensity" (ngModelChange)="setWeekDayField(wi, di, 'intensity', $event)">
+                            @for (i of intensities; track i) { <option [value]="i">{{ i }}</option> }
+                          </select>
+                        </td>
+                        <td><input class="sp-input-sm" placeholder="MD-3…" [value]="day.matchProximity" (input)="setWeekDayField(wi, di, 'matchProximity', $any($event.target).value)" /></td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+          <button class="sp-btn sp-btn-outline sp-mt-3" (click)="addWeek()">+ Add Week</button>
+        </div>
+      }
+
+      <!-- ── Season Plan Edit ──────────────────────────────────────────────── -->
+      @if (selectedPlan()!.type === 'season-plan') {
+        <div class="sp-form-section">
+          <h3 class="sp-section-title">Season Phases</h3>
+          @for (sp of asSeason(editData()).phases; track $index; let spi = $index) {
+            <div class="sp-season-phase">
+              <div class="sp-season-phase-header">
+                <span class="sp-week-label-text">Phase {{ spi + 1 }}</span>
+                @if (asSeason(editData()).phases.length > 1) {
+                  <button class="sp-icon-btn sp-icon-btn-danger" (click)="removeSeasonPhase(spi)">🗑</button>
+                }
+              </div>
+              <div class="sp-form-grid-3">
+                <div class="sp-field">
+                  <label class="sp-label">Phase Name</label>
+                  <input class="sp-input" [value]="sp.name"
+                    (input)="setSeasonPhaseField(spi, 'name', $any($event.target).value)" />
+                </div>
+                <div class="sp-field">
+                  <label class="sp-label">Start Date</label>
+                  <input type="date" class="sp-input" [value]="sp.startDate"
+                    (change)="setSeasonPhaseField(spi, 'startDate', $any($event.target).value)" />
+                </div>
+                <div class="sp-field">
+                  <label class="sp-label">End Date</label>
+                  <input type="date" class="sp-input" [value]="sp.endDate"
+                    (change)="setSeasonPhaseField(spi, 'endDate', $any($event.target).value)" />
+                </div>
+              </div>
+              <div class="sp-form-grid-2 sp-mt-2">
+                <div class="sp-field">
+                  <label class="sp-label">Focus</label>
+                  <input class="sp-input" placeholder="Phase focus…" [value]="sp.focus"
+                    (input)="setSeasonPhaseField(spi, 'focus', $any($event.target).value)" />
+                </div>
+                <div class="sp-field">
+                  <label class="sp-label">Weekly Structure Summary</label>
+                  <input class="sp-input" placeholder="e.g. 3 sessions + 1 match"
+                    [value]="sp.weeklyStructure"
+                    (input)="setSeasonPhaseField(spi, 'weeklyStructure', $any($event.target).value)" />
+                </div>
+              </div>
+            </div>
+          }
+          <button class="sp-btn sp-btn-outline sp-mt-3" (click)="addSeasonPhase()">+ Add Phase</button>
+        </div>
+      }
+
+    }<!-- end content tab -->
+
+  </div><!-- end detail-body -->
+
+</div>
+}<!-- end detail view -->
+
+}<!-- end @else (not loading/error) -->

@@ -6,6 +6,12 @@ import { Client } from 'pg';
  * so TypeORM can connect successfully.
  */
 export async function ensureDatabase(): Promise<void> {
+  // Railway (and other managed PG providers) supply DATABASE_URL — the DB already exists.
+  if (process.env.DATABASE_URL) {
+    console.log('✔  DATABASE_URL detected — skipping database creation.');
+    return;
+  }
+
   const host = process.env.DB_HOST ?? 'localhost';
   const port = Number(process.env.DB_PORT ?? 5432);
   const user = process.env.DB_USER ?? 'postgres';

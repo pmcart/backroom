@@ -29,6 +29,11 @@ export const routes: Routes = [
         data: { title: 'Squads' },
       },
       {
+        path: 'squads/:id',
+        loadComponent: () => import('./features/admin/squads/squad-detail').then((m) => m.SquadDetail),
+        data: { title: 'Squad Detail' },
+      },
+      {
         path: 'idp',
         loadComponent: () => import('./features/admin/idp/idp').then((m) => m.Idp),
         data: { title: 'IDP Management' },
@@ -36,7 +41,7 @@ export const routes: Routes = [
       {
         path: 'planning',
         loadComponent: () => import('./features/admin/planning/planning').then((m) => m.Planning),
-        data: { title: 'Planning Overview' },
+        data: { title: 'Weekly Schedule' },
       },
       {
         path: 'monitoring',
@@ -52,6 +57,11 @@ export const routes: Routes = [
         path: 'settings',
         loadComponent: () => import('./features/admin/settings/settings').then((m) => m.Settings),
         data: { title: 'Settings' },
+      },
+      {
+        path: 'methodology',
+        loadComponent: () => import('./features/admin/methodology/methodology').then((m) => m.Methodology),
+        data: { title: 'Club Methodology' },
       },
     ],
   },
@@ -93,6 +103,11 @@ export const routes: Routes = [
         path: 'education',
         loadComponent: () => import('./features/coach/education/education').then((m) => m.Education),
         data: { title: 'Education' },
+      },
+      {
+        path: 'methodology',
+        loadComponent: () => import('./features/coach/methodology/methodology').then((m) => m.Methodology),
+        data: { title: 'Club Methodology' },
       },
     ],
   },

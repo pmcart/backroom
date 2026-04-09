@@ -1,1 +1,132 @@
-<p>squad works!</p>
+@if (loading()) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+} @else if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+} @else if (mySquads().length === 0) {
+  <div class="text-center py-5 text-muted">
+    <p>You are not currently assigned to any squad.</p>
+  </div>
+} @else {
+  <!-- Page header -->
+  <div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+      <h4 class="mb-1 fw-semibold">My Squad</h4>
+      <p class="text-muted mb-0 small">Read-only view of your assigned squad(s)</p>
+    </div>
+  </div>
+
+  <!-- Squad tabs (if assigned to multiple) -->
+  @if (mySquads().length > 1) {
+    <ul class="nav nav-tabs mb-4">
+      @for (squad of mySquads(); track squad.id) {
+        <li class="nav-item">
+          <button
+            class="nav-link"
+            [class.active]="selectedSquad()?.id === squad.id"
+            (click)="selectSquad(squad.id)"
+          >
+            {{ squad.name }}
+          </button>
+        </li>
+      }
+    </ul>
+  }
+
+  @if (selectedSquad()) {
+    <!-- Stats bar -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+          <div class="card-body py-3">
+            <div class="fs-4 fw-bold text-success">{{ activeCount(selectedSquad()!) }}</div>
+            <small class="text-muted">Active</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+          <div class="card-body py-3">
+            <div class="fs-4 fw-bold text-danger">{{ injuredCount(selectedSquad()!) }}</div>
+            <small class="text-muted">Injured</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+          <div class="card-body py-3">
+            <div class="fs-4 fw-bold text-warning">{{ recoveryCount(selectedSquad()!) }}</div>
+            <small class="text-muted">Recovery</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+          <div class="card-body py-3">
+            <div class="fs-4 fw-bold text-secondary">{{ selectedSquad()!.players.length }}</div>
+            <small class="text-muted">Total Players</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Squad info -->
+    <div class="mb-3 d-flex align-items-center gap-2">
+      <h5 class="mb-0">{{ selectedSquad()!.name }}</h5>
+      <span class="badge bg-secondary">{{ selectedSquad()!.ageGroup }}</span>
+    </div>
+
+    <!-- Coaching staff -->
+    @if (selectedSquad()!.coachAssignments.length > 0) {
+      <div class="mb-4">
+        <small class="text-muted fw-semibold text-uppercase d-block mb-2" style="font-size:0.7rem; letter-spacing:0.05em;">Coaching Staff</small>
+        @for (ca of selectedSquad()!.coachAssignments; track ca.id) {
+          <span class="badge bg-dark me-1">{{ ca.user?.firstName }} {{ ca.user?.lastName }}</span>
+        }
+      </div>
+    }
+
+    <!-- Player table -->
+    <div class="card shadow-sm">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0 fw-semibold">Players ({{ selectedSquad()!.players.length }})</h6>
+      </div>
+
+      @if (selectedSquad()!.players.length === 0) {
+        <div class="card-body text-center py-5 text-muted">
+          <p>No players in this squad.</p>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Name</th>
+                <th>Position</th>
+                <th>Date of Birth</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (player of selectedSquad()!.players; track player.id) {
+                <tr>
+                  <td class="fw-semibold">{{ player.firstName }} {{ player.lastName }}</td>
+                  <td class="text-muted">{{ player.position || '—' }}</td>
+                  <td class="text-muted">{{ formatDate(player.dateOfBirth) }}</td>
+                  <td>
+                    <span class="badge {{ statusBadgeClass(player.status) }}">
+                      {{ player.status | titlecase }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+}

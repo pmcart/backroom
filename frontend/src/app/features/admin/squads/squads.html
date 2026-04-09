@@ -1,1 +1,236 @@
-<p>squads works!</p>
+<!-- Page header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="mb-1 fw-semibold">Squad Management</h4>
+    <p class="text-muted mb-0 small">Manage squads, players, and coaching staff</p>
+  </div>
+  <button class="btn btn-primary" (click)="openAddModal()">
+    + Add Squad
+  </button>
+</div>
+
+<!-- Search + filter bar -->
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <input
+      type="text"
+      class="form-control"
+      placeholder="Search squads..."
+      [value]="searchTerm()"
+      (input)="searchTerm.set($any($event.target).value)"
+    />
+  </div>
+  <div class="col-md-4">
+    <select
+      class="form-select"
+      [value]="ageGroupFilter()"
+      (change)="ageGroupFilter.set($any($event.target).value)"
+    >
+      <option value="">All Age Groups</option>
+      @for (group of ageGroups(); track group) {
+        <option [value]="group">{{ group }}</option>
+      }
+    </select>
+  </div>
+  @if (ageGroupFilter() || searchTerm()) {
+    <div class="col-auto d-flex align-items-center">
+      <button class="btn btn-outline-secondary btn-sm" (click)="searchTerm.set(''); ageGroupFilter.set('')">
+        Clear filters
+      </button>
+    </div>
+  }
+</div>
+
+<!-- States -->
+@if (loading()) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-3 text-muted">Loading squads...</p>
+  </div>
+} @else if (error()) {
+  <div class="alert alert-danger d-flex align-items-center gap-2">
+    <span>{{ error() }}</span>
+    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="loadSquads()">Retry</button>
+  </div>
+} @else if (filteredSquads().length === 0) {
+  <div class="text-center py-5">
+    <p class="text-muted mb-2">No squads found.</p>
+    @if (!searchTerm() && !ageGroupFilter()) {
+      <button class="btn btn-primary" (click)="openAddModal()">Create your first squad</button>
+    }
+  </div>
+} @else {
+  <!-- Squad cards -->
+  <div class="row g-4">
+    @for (squad of filteredSquads(); track squad.id) {
+      <div class="col-md-6 col-xl-4">
+        <div class="card h-100 shadow-sm">
+          <div class="card-header d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="mb-0 fw-semibold">{{ squad.name }}</h6>
+              <span class="badge bg-secondary mt-1">{{ squad.ageGroup }}</span>
+            </div>
+            <div class="position-relative" (click)="$event.stopPropagation()">
+              <button
+                class="btn btn-sm btn-light"
+                (click)="toggleDropdown(squad.id, $event)"
+                aria-label="Squad options"
+              >&#8942;</button>
+              @if (activeDropdown() === squad.id) {
+                <ul class="dropdown-menu show position-absolute end-0" style="top: 100%; z-index: 1050;">
+                  <li>
+                    <button class="dropdown-item" (click)="viewSquad(squad.id); activeDropdown.set(null)">
+                      View
+                    </button>
+                  </li>
+                  <li><hr class="dropdown-divider" /></li>
+                  <li>
+                    <button class="dropdown-item text-danger" (click)="confirmDelete(squad)">
+                      Delete
+                    </button>
+                  </li>
+                </ul>
+              }
+            </div>
+          </div>
+
+          <div class="card-body">
+            <!-- Player status counts -->
+            <div class="row g-2 text-center mb-3">
+              <div class="col-4">
+                <div class="rounded p-2" style="background:#d1e7dd;">
+                  <div class="fw-bold text-success fs-5">{{ activeCount(squad) }}</div>
+                  <small class="text-success">Active</small>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="rounded p-2" style="background:#f8d7da;">
+                  <div class="fw-bold text-danger fs-5">{{ injuredCount(squad) }}</div>
+                  <small class="text-danger">Injured</small>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="rounded p-2" style="background:rgba(234,179,8,0.15);">
+                  <div class="fw-bold text-warning fs-5">{{ recoveryCount(squad) }}</div>
+                  <small class="text-warning">Recovery</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Coaching staff -->
+            <div>
+              <small class="text-muted d-block mb-2 fw-semibold text-uppercase" style="font-size:0.7rem; letter-spacing:0.05em;">Coaching Staff</small>
+              @if (squad.coachAssignments.length === 0) {
+                <small class="text-muted fst-italic">No coaches assigned</small>
+              } @else {
+                @for (ca of squad.coachAssignments; track ca.id) {
+                  <span class="badge bg-dark me-1 mb-1">
+                    {{ ca.user?.firstName }} {{ ca.user?.lastName }}
+                  </span>
+                }
+              }
+            </div>
+          </div>
+
+          <div class="card-footer bg-transparent">
+            <button class="btn btn-outline-primary btn-sm w-100" (click)="viewSquad(squad.id)">
+              View Squad
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}
+
+<!-- Delete Confirm Modal Backdrop -->
+@if (squadToDelete()) {
+  <div class="modal-backdrop fade show"></div>
+}
+
+<!-- Delete Confirm Modal -->
+<div
+  class="modal fade"
+  [class.show]="squadToDelete()"
+  [style.display]="squadToDelete() ? 'block' : 'none'"
+  tabindex="-1"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Delete Squad</h5>
+        <button type="button" class="btn-close" (click)="cancelDelete()"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete <strong>{{ squadToDelete()?.name }}</strong>?</p>
+        <p class="text-muted small mb-0">This will permanently remove the squad and all associated players and coaching staff assignments.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cancelDelete()">Cancel</button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          (click)="deleteSquad()"
+          [disabled]="deleting"
+        >
+          {{ deleting ? 'Deleting...' : 'Delete Squad' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Squad Modal Backdrop -->
+@if (showAddModal()) {
+  <div class="modal-backdrop fade show"></div>
+}
+
+<!-- Add Squad Modal -->
+<div
+  class="modal fade"
+  [class.show]="showAddModal()"
+  [style.display]="showAddModal() ? 'block' : 'none'"
+  tabindex="-1"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add Squad</h5>
+        <button type="button" class="btn-close" (click)="closeAddModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Squad Name</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="newName"
+            placeholder="e.g. U17 Boys"
+          />
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Age Group</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="newAgeGroup"
+            placeholder="e.g. U17"
+          />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAddModal()">Cancel</button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="createSquad()"
+          [disabled]="saving || !newName.trim() || !newAgeGroup.trim()"
+        >
+          {{ saving ? 'Creating...' : 'Create Squad' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

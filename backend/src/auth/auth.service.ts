@@ -40,6 +40,7 @@ export class AuthService {
         lastName: user.lastName,
         role: user.role,
         clubId: user.clubId,
+        clubName: user.club?.name ?? null,
       },
     };
   }
