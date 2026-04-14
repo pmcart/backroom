@@ -42,6 +42,13 @@ export class Idp implements OnInit {
   createStartDate         = signal('');
   createTargetCompletion  = signal('');
 
+  // ── Export / Email ────────────────────────────────────────────────────────
+  exportingPdf    = signal(false);
+  showEmailModal  = signal(false);
+  emailAddress    = signal('');
+  emailSending    = signal(false);
+  emailResult     = signal<{ ok: boolean; msg: string } | null>(null);
+
   // ── Timeline editing (detail view) ────────────────────────────────────────
   editingTimeline       = signal(false);
   timelineStartDate     = signal('');
@@ -490,6 +497,44 @@ export class Idp implements OnInit {
 
   setHolisticPillar(pillar: string, value: number) {
     this.holisticEval.update((e) => ({ ...e, [pillar]: value }));
+  }
+
+  // ── PDF / Email ───────────────────────────────────────────────────────────
+  downloadPdf() {
+    const idp = this.selectedIdp();
+    if (!idp) return;
+    const name = `${idp.player?.firstName ?? 'idp'}-${idp.player?.lastName ?? idp.id}`
+      .toLowerCase().replace(/\s+/g, '-') + '-idp.pdf';
+    this.exportingPdf.set(true);
+    this.idpService.downloadPdf(idp.id, name).subscribe({
+      next: () => this.exportingPdf.set(false),
+      error: () => this.exportingPdf.set(false),
+    });
+  }
+
+  openEmailModal() {
+    this.emailAddress.set('');
+    this.emailResult.set(null);
+    this.showEmailModal.set(true);
+  }
+
+  closeEmailModal() { this.showEmailModal.set(false); }
+
+  sendEmail() {
+    const idp = this.selectedIdp();
+    if (!idp || !this.emailAddress().trim()) return;
+    this.emailSending.set(true);
+    this.emailResult.set(null);
+    this.idpService.sendEmail(idp.id, this.emailAddress().trim()).subscribe({
+      next: (res) => {
+        this.emailSending.set(false);
+        this.emailResult.set({ ok: true, msg: res.message });
+      },
+      error: () => {
+        this.emailSending.set(false);
+        this.emailResult.set({ ok: false, msg: 'Failed to send email. Check SMTP configuration.' });
+      },
+    });
   }
 
   // ── Timeline ──────────────────────────────────────────────────────────────

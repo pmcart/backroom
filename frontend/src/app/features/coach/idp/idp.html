@@ -262,6 +262,10 @@
               <option value="review-due">Review Due</option>
               <option value="completed">Completed</option>
             </select>
+            <button class="dh-export-btn" title="Download PDF" [disabled]="exportingPdf()" (click)="downloadPdf()">
+              {{ exportingPdf() ? '…' : '↓ PDF' }}
+            </button>
+            <button class="dh-export-btn" title="Send as email" (click)="openEmailModal()">✉ Email</button>
             <button class="idp-danger-btn" (click)="deleteIdp(selectedIdp()!.id)">Delete</button>
           </div>
         </div>
@@ -968,3 +972,45 @@
 }<!-- end split layout -->
 
 }<!-- end @else (not loading/error) -->
+
+<!-- ═══ Email Modal ═══════════════════════════════════════════════════════ -->
+@if (showEmailModal()) {
+  <div class="email-modal-backdrop" (click)="closeEmailModal()"></div>
+  <div class="email-modal">
+    <div class="email-modal-header">
+      <h5 class="email-modal-title">Send IDP by Email</h5>
+      <button class="aim-close-btn" (click)="closeEmailModal()">✕</button>
+    </div>
+    <div class="email-modal-body">
+      @if (selectedIdp()) {
+        <p class="email-modal-sub">
+          Send a full IDP report for
+          <strong>{{ selectedIdp()!.player?.firstName }} {{ selectedIdp()!.player?.lastName }}</strong>
+          to the address below.
+        </p>
+      }
+      <label class="icp-label">Email Address</label>
+      <input
+        type="email"
+        class="icp-input"
+        placeholder="recipient@example.com"
+        [value]="emailAddress()"
+        (input)="emailAddress.set($any($event.target).value)"
+        (keyup.enter)="sendEmail()"
+      />
+      @if (emailResult()) {
+        <div class="email-result" [class.email-result-ok]="emailResult()!.ok" [class.email-result-err]="!emailResult()!.ok">
+          {{ emailResult()!.msg }}
+        </div>
+      }
+    </div>
+    <div class="email-modal-footer">
+      <button class="icp-btn icp-btn-ghost" (click)="closeEmailModal()">Cancel</button>
+      <button
+        class="icp-btn icp-btn-primary"
+        [disabled]="!emailAddress().trim() || emailSending()"
+        (click)="sendEmail()"
+      >{{ emailSending() ? 'Sending…' : 'Send Email' }}</button>
+    </div>
+  </div>
+}

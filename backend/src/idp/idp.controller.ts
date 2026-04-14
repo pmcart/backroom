@@ -1,5 +1,8 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Request, Res, UseGuards } from '@nestjs/common';
+import type { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { IdpEmailService } from './idp-email.service';
+import { IdpPdfService } from './idp-pdf.service';
 import { AddProgressNoteDto } from './dto/add-progress-note.dto';
 import { CreateGoalDto } from './dto/create-goal.dto';
 import { CreateIdpDto } from './dto/create-idp.dto';
@@ -14,7 +17,11 @@ import { IdpService } from './idp.service';
 @Controller('idps')
 @UseGuards(JwtAuthGuard)
 export class IdpController {
-  constructor(private readonly idpService: IdpService) {}
+  constructor(
+    private readonly idpService: IdpService,
+    private readonly pdfService: IdpPdfService,
+    private readonly emailService: IdpEmailService,
+  ) {}
 
   // ── IDP CRUD ──────────────────────────────────────────────────────────────
 
@@ -108,5 +115,38 @@ export class IdpController {
   @Patch(':id/elite')
   updateElite(@Param('id') id: string, @Body() dto: UpdateEliteDto, @Request() req: any) {
     return this.idpService.updateElite(id, dto, req.user.clubId);
+  }
+
+  // ── PDF ───────────────────────────────────────────────────────────────────
+
+  @Get(':id/pdf')
+  async downloadPdf(
+    @Param('id') id: string,
+    @Request() req: any,
+    @Res() res: Response,
+  ) {
+    const idp = await this.idpService.findOne(id, req.user.clubId);
+    const buffer = await this.pdfService.generate(idp);
+    const playerName = `${idp.player?.firstName ?? 'idp'}-${idp.player?.lastName ?? id}`
+      .toLowerCase().replace(/\s+/g, '-');
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${playerName}-idp.pdf"`,
+      'Content-Length': buffer.length,
+    });
+    res.end(buffer);
+  }
+
+  // ── Email ─────────────────────────────────────────────────────────────────
+
+  @Post(':id/send-email')
+  async sendEmail(
+    @Param('id') id: string,
+    @Body() body: { email: string },
+    @Request() req: any,
+  ) {
+    const idp = await this.idpService.findOne(id, req.user.clubId);
+    await this.emailService.sendIdpEmail(idp, body.email);
+    return { success: true, message: `IDP sent to ${body.email}` };
   }
 }

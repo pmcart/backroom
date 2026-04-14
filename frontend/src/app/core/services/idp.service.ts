@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { Idp, IdpMode, IdpStatus, NoteStatus, SwotAnalysis } from '../models/idp.model';
 
@@ -113,5 +114,26 @@ export class IdpService {
 
   updateElite(idpId: string, payload: ElitePayload): Observable<Idp> {
     return this.http.patch<Idp>(`${this.base}/${idpId}/elite`, payload);
+  }
+
+  // ── PDF download ──────────────────────────────────────────────────────────
+
+  downloadPdf(idpId: string, filename: string): Observable<Blob> {
+    return this.http.get(`${this.base}/${idpId}/pdf`, { responseType: 'blob' }).pipe(
+      tap((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      }),
+    );
+  }
+
+  // ── Email ─────────────────────────────────────────────────────────────────
+
+  sendEmail(idpId: string, email: string): Observable<{ success: boolean; message: string }> {
+    return this.http.post<{ success: boolean; message: string }>(`${this.base}/${idpId}/send-email`, { email });
   }
 }
