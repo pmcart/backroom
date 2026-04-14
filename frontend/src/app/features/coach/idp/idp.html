@@ -87,6 +87,24 @@
               (input)="createReviewDate.set($any($event.target).value)"
             />
           </div>
+          <div class="icp-field">
+            <label class="icp-label">Start Date</label>
+            <input
+              type="date"
+              class="icp-input"
+              [value]="createStartDate()"
+              (input)="createStartDate.set($any($event.target).value)"
+            />
+          </div>
+          <div class="icp-field">
+            <label class="icp-label">Target Completion</label>
+            <input
+              type="date"
+              class="icp-input"
+              [value]="createTargetCompletion()"
+              (input)="createTargetCompletion.set($any($event.target).value)"
+            />
+          </div>
         </div>
 
         @if (createPlayerId()) {
@@ -290,6 +308,56 @@
           <span class="dh-progress-pct {{ progressTextClass(selectedIdp()!.progress) }}">{{ selectedIdp()!.progress }}%</span>
         </div>
 
+        <!-- Row 4: Timeline -->
+        @if (!editingTimeline()) {
+          <div class="dh-timeline-row">
+            @if (selectedIdp()!.startDate && selectedIdp()!.targetCompletionDate) {
+              <div class="dh-timeline-bar-wrap">
+                <div class="dh-timeline-labels">
+                  <span class="dh-tl-label">{{ formatDate(selectedIdp()!.startDate) }}</span>
+                  <span class="dh-tl-center">
+                    @if (daysRemaining(selectedIdp()!) !== null) {
+                      @if ((daysRemaining(selectedIdp()!) ?? 0) < 0) {
+                        <span class="dh-tl-overdue">{{ (daysRemaining(selectedIdp()!) ?? 0) * -1 }} days overdue</span>
+                      } @else {
+                        <span class="dh-tl-remaining">{{ daysRemaining(selectedIdp()!) }} days remaining</span>
+                      }
+                    }
+                  </span>
+                  <span class="dh-tl-label">{{ formatDate(selectedIdp()!.targetCompletionDate) }}</span>
+                </div>
+                <div class="dh-timeline-track">
+                  <div class="dh-timeline-fill" [style.width.%]="timelinePercent(selectedIdp()!)"></div>
+                </div>
+              </div>
+            } @else {
+              <span class="dh-tl-empty">No timeline set</span>
+            }
+            <button class="dh-tl-edit-btn" (click)="openEditTimeline()">Edit Timeline</button>
+          </div>
+        } @else {
+          <div class="dh-timeline-edit">
+            <div class="dh-tl-fields">
+              <div class="dh-tl-field">
+                <label>Start Date</label>
+                <input type="date" class="icp-input icp-input-sm" [value]="timelineStartDate()" (input)="timelineStartDate.set($any($event.target).value)" />
+              </div>
+              <div class="dh-tl-field">
+                <label>Review Date</label>
+                <input type="date" class="icp-input icp-input-sm" [value]="timelineReviewDate()" (input)="timelineReviewDate.set($any($event.target).value)" />
+              </div>
+              <div class="dh-tl-field">
+                <label>Target Completion</label>
+                <input type="date" class="icp-input icp-input-sm" [value]="timelineTargetDate()" (input)="timelineTargetDate.set($any($event.target).value)" />
+              </div>
+            </div>
+            <div class="dh-tl-actions">
+              <button class="icp-btn icp-btn-ghost icp-btn-sm" (click)="cancelEditTimeline()">Cancel</button>
+              <button class="icp-btn icp-btn-primary icp-btn-sm" (click)="saveTimeline()">Save</button>
+            </div>
+          </div>
+        }
+
         <!-- Tabs -->
         <div class="detail-tabs">
           <button class="detail-tab" [class.active]="activeTab() === 'overview'" (click)="activeTab.set('overview')">Overview</button>
@@ -297,6 +365,7 @@
             Goals
             <span class="tab-count">{{ selectedIdp()!.goals.length }}</span>
           </button>
+          <button class="detail-tab" [class.active]="activeTab() === 'swot'" (click)="activeTab.set('swot')">SWOT</button>
           <button class="detail-tab" [class.active]="activeTab() === 'notes'" (click)="activeTab.set('notes')">Notes</button>
           @if (selectedIdp()!.mode === 'elite') {
             <button class="detail-tab" [class.active]="activeTab() === 'elite'" (click)="activeTab.set('elite')">Elite Profile</button>
@@ -333,16 +402,35 @@
             </div>
           </div>
 
+          <!-- Pillar summary cards -->
+          <h3 class="idp-section-title">Goals by Pillar</h3>
+          <div class="overview-pillars">
+            @for (pillar of goalPillars; track pillar) {
+              <div class="overview-pillar-card" (click)="activeTab.set('goals')">
+                <div class="opc-icon">{{ pillarIcon(pillar) }}</div>
+                <div class="opc-body">
+                  <div class="opc-name">{{ pillarLabel(pillar) }}</div>
+                  <div class="opc-count">{{ goalsByPillar()[pillar]?.length ?? 0 }} goal{{ (goalsByPillar()[pillar]?.length ?? 0) !== 1 ? 's' : '' }}</div>
+                </div>
+                @if ((goalsByPillar()[pillar] ?? []).some(g => g.status === 'at-risk')) {
+                  <span class="opc-alert">⚠</span>
+                }
+              </div>
+            }
+          </div>
+
           @if (selectedIdp()!.goals.length > 0) {
-            <h3 class="idp-section-title">Goal Summary</h3>
+            <h3 class="idp-section-title" style="margin-top:20px">Recent Goals</h3>
             <div class="idp-goal-summary-list">
-              @for (goal of selectedIdp()!.goals; track goal.id) {
+              @for (goal of selectedIdp()!.goals.slice(0, 4); track goal.id) {
                 <div class="idp-goal-summary-card">
                   <div class="idp-goal-summary-top">
                     <div>
-                      <div class="idp-goal-title">{{ goal.title }}</div>
-                      @if (goal.category) {
-                        <div class="idp-goal-cat">{{ goal.category }}</div>
+                      <div class="idp-goal-title">
+                        <span style="margin-right:4px">{{ pillarIcon(goal.category ?? 'other') }}</span>{{ goal.title }}
+                      </div>
+                      @if (goal.targetDate) {
+                        <div class="idp-goal-cat">Due {{ formatDate(goal.targetDate) }}</div>
                       }
                     </div>
                     <span class="idp-goal-status-badge idp-goal-status-{{ goal.status }}">{{ goalStatusLabel(goal.status) }}</span>
@@ -368,57 +456,60 @@
         <!-- ════ GOALS TAB ════ -->
         @if (activeTab() === 'goals') {
 
-          <div class="goals-header">
-            <h3 class="idp-section-title" style="margin:0">Development Goals</h3>
-            @if (!showGoalForm()) {
-              <button class="icp-btn icp-btn-primary icp-btn-sm" (click)="openAddGoal()">+ Add Goal</button>
-            }
-          </div>
-
-          <!-- Inline Goal Form -->
+          <!-- SMART Goal Form -->
           @if (showGoalForm()) {
             <div class="goal-form-card">
               <div class="goal-form-header">
-                <span>{{ editingGoalId() ? 'Edit Goal' : 'Add Goal' }}</span>
+                <span>{{ editingGoalId() ? 'Edit Goal' : 'New Goal' }}</span>
                 <button class="goal-form-close" (click)="showGoalForm.set(false)">×</button>
               </div>
               <div class="goal-form-body">
+                <!-- SMART label strip -->
+                <div class="smart-strip">
+                  <span class="smart-chip smart-s">S</span>
+                  <span class="smart-chip smart-m">M</span>
+                  <span class="smart-chip smart-a">A</span>
+                  <span class="smart-chip smart-r">R</span>
+                  <span class="smart-chip smart-t">T</span>
+                  <span class="smart-strip-label">SMART Goal Framework</span>
+                </div>
+
                 <div class="icp-field">
-                  <label class="icp-label">Title <span class="icp-required">*</span></label>
-                  <input class="icp-input" placeholder="Goal title…"
+                  <label class="icp-label"><span class="smart-inline smart-s">S</span> Specific — what exactly will be achieved?</label>
+                  <input class="icp-input" placeholder="e.g. Improve weak-foot passing accuracy in tight spaces"
                     [value]="goalTitle()"
                     (input)="goalTitle.set($any($event.target).value)" />
                 </div>
                 <div class="goal-form-grid">
                   <div class="icp-field">
-                    <label class="icp-label">Category</label>
+                    <label class="icp-label">Pillar</label>
                     <select class="icp-select"
                       [value]="goalCategory()"
                       (change)="goalCategory.set($any($event.target).value)">
                       <option value="">— select —</option>
-                      <option value="technical">Technical</option>
-                      <option value="tactical">Tactical</option>
-                      <option value="physical">Physical</option>
-                      <option value="psychological">Psychological</option>
-                      <option value="lifestyle">Lifestyle &amp; Education</option>
+                      <option value="technical">⚽ Technical</option>
+                      <option value="tactical">🧠 Tactical</option>
+                      <option value="physical">💪 Physical</option>
+                      <option value="psychological">🎯 Psychological</option>
+                      <option value="lifestyle">📚 Lifestyle &amp; Education</option>
                     </select>
                   </div>
                   <div class="icp-field">
-                    <label class="icp-label">Target Date</label>
+                    <label class="icp-label"><span class="smart-inline smart-t">T</span> Time-bound — target date</label>
                     <input type="date" class="icp-input"
                       [value]="goalTargetDate()"
                       (input)="goalTargetDate.set($any($event.target).value)" />
                   </div>
                 </div>
                 <div class="icp-field">
-                  <label class="icp-label">Description</label>
-                  <textarea class="icp-textarea" rows="2" placeholder="Specific, measurable, time-bound…"
+                  <label class="icp-label"><span class="smart-inline smart-a">A</span><span class="smart-inline smart-r">R</span> Achievable &amp; Relevant — context and rationale</label>
+                  <textarea class="icp-textarea" rows="2" placeholder="Why is this goal relevant right now? Is it achievable given current level?"
                     [value]="goalDescription()"
                     (input)="goalDescription.set($any($event.target).value)"></textarea>
                 </div>
                 <div class="icp-field">
-                  <label class="icp-label">KPI / Measurement</label>
-                  <input class="icp-input" placeholder="How will success be measured?"
+                  <label class="icp-label"><span class="smart-inline smart-m">M</span> Measurable — KPI / success criteria</label>
+                  <input class="icp-input" placeholder="e.g. 80% pass completion rate in training sessions"
                     [value]="goalKpi()"
                     (input)="goalKpi.set($any($event.target).value)" />
                 </div>
@@ -446,12 +537,7 @@
                   <label class="icp-label">Coach Rating</label>
                   <div class="goal-stars">
                     @for (s of stars; track s) {
-                      <button
-                        type="button"
-                        class="star-btn"
-                        [class.star-active]="s <= (goalRating() ?? 0)"
-                        (click)="setGoalRating(s)"
-                      >★</button>
+                      <button type="button" class="star-btn" [class.star-active]="s <= (goalRating() ?? 0)" (click)="setGoalRating(s)">★</button>
                     }
                     @if (goalRating()) {
                       <button type="button" class="star-clear" (click)="goalRating.set(null)">Clear</button>
@@ -468,77 +554,121 @@
             </div>
           }
 
-          <!-- Goal Cards -->
-          @if (selectedIdp()!.goals.length === 0 && !showGoalForm()) {
-            <div class="idp-empty-hint" style="text-align:center; padding:32px 0">No goals yet. Add the first goal for this player.</div>
-          } @else {
-            <div class="goal-cards-list">
-              @for (goal of selectedIdp()!.goals; track goal.id) {
-                <div class="goal-card">
-                  <div class="goal-card-header">
-                    <div>
-                      <div class="goal-card-title">
-                        <span class="goal-cat-icon">{{ goal.category === 'technical' ? '⚽' : goal.category === 'tactical' ? '🧠' : goal.category === 'physical' ? '💪' : goal.category === 'psychological' ? '🎯' : '📚' }}</span>
-                        {{ goal.title }}
-                      </div>
-                      @if (goal.category) {
-                        <div class="goal-card-sub" style="text-transform:capitalize">{{ goal.category }}</div>
-                      }
-                      @if (goal.targetDate) {
-                        <div class="goal-card-sub">Target: {{ formatDate(goal.targetDate) }}</div>
-                      }
-                    </div>
-                    <div class="goal-card-actions">
-                      <select
-                        class="icp-select icp-select-sm"
-                        [value]="goal.status"
-                        (change)="quickSetGoalStatus(goal, $any($event.target).value)"
-                      >
-                        <option value="not-started">Not Started</option>
-                        <option value="in-progress">In Progress</option>
-                        <option value="on-track">On Track</option>
-                        <option value="at-risk">At Risk</option>
-                        <option value="completed">Completed</option>
-                      </select>
-                      <button class="goal-edit-btn" (click)="openEditGoal(goal)">Edit</button>
-                      <button class="goal-delete-btn" (click)="deleteGoal(goal.id)">Delete</button>
-                    </div>
+          <!-- Pillar Sections -->
+          @if (!showGoalForm()) {
+            @for (pillar of goalPillars; track pillar) {
+              <div class="pillar-section">
+                <div class="pillar-section-header">
+                  <div class="pillar-section-title">
+                    <span class="pillar-icon">{{ pillarIcon(pillar) }}</span>
+                    <span>{{ pillarLabel(pillar) }}</span>
+                    <span class="pillar-count">{{ goalsByPillar()[pillar]?.length ?? 0 }}</span>
                   </div>
+                  <button class="icp-btn icp-btn-outline icp-btn-sm" (click)="openAddGoalForPillar(pillar)">+ Goal</button>
+                </div>
 
-                  @if (goal.description) {
-                    <p class="goal-card-desc">{{ goal.description }}</p>
-                  }
+                @if ((goalsByPillar()[pillar]?.length ?? 0) === 0) {
+                  <p class="pillar-empty">No {{ pillarLabel(pillar) | lowercase }} goals yet.</p>
+                } @else {
+                  <div class="goal-cards-list">
+                    @for (goal of goalsByPillar()[pillar]; track goal.id) {
+                      <div class="goal-card">
+                        <div class="goal-card-header">
+                          <div class="goal-card-title-wrap">
+                            <span class="goal-card-title">{{ goal.title }}</span>
+                            @if (goal.targetDate) {
+                              <span class="goal-card-date">{{ formatDate(goal.targetDate) }}</span>
+                            }
+                          </div>
+                          <div class="goal-card-actions">
+                            <select class="icp-select icp-select-sm" [value]="goal.status" (change)="quickSetGoalStatus(goal, $any($event.target).value)">
+                              <option value="not-started">Not Started</option>
+                              <option value="in-progress">In Progress</option>
+                              <option value="on-track">On Track</option>
+                              <option value="at-risk">At Risk</option>
+                              <option value="completed">Completed</option>
+                            </select>
+                            <button class="goal-edit-btn" (click)="openEditGoal(goal)">Edit</button>
+                            <button class="goal-delete-btn" (click)="deleteGoal(goal.id)">✕</button>
+                          </div>
+                        </div>
 
-                  @if (goal.kpi) {
-                    <div class="goal-kpi">
-                      <span class="goal-kpi-label">KPI:</span> {{ goal.kpi }}
-                    </div>
-                  }
-
-                  <div class="goal-progress-row">
-                    <span class="goal-progress-label">Progress</span>
-                    <div class="idp-progress-bar-wrap" style="flex:1">
-                      <div class="idp-progress-bar" [style.width.%]="goal.progress"
-                        [class.idp-progress-green]="goal.progress >= 70"
-                        [class.idp-progress-amber]="goal.progress >= 40 && goal.progress < 70"
-                        [class.idp-progress-red]="goal.progress < 40"></div>
-                    </div>
-                    <span class="goal-progress-pct {{ progressTextClass(goal.progress) }}">{{ goal.progress }}%</span>
-                  </div>
-
-                  @if (goal.coachRating !== null && goal.coachRating !== undefined) {
-                    <div class="goal-rating-row">
-                      <span class="goal-rating-label">Coach Rating</span>
-                      <div class="goal-stars-display">
-                        @for (s of stars; track s) {
-                          <span [class.star-active]="s <= (goal.coachRating ?? 0)">★</span>
+                        @if (goal.description) {
+                          <p class="goal-card-desc">{{ goal.description }}</p>
                         }
+
+                        @if (goal.kpi) {
+                          <div class="goal-kpi"><span class="goal-kpi-label">KPI</span>{{ goal.kpi }}</div>
+                        }
+
+                        <div class="goal-progress-row">
+                          <div class="idp-progress-bar-wrap" style="flex:1">
+                            <div class="idp-progress-bar" [style.width.%]="goal.progress"
+                              [class.idp-progress-green]="goal.progress >= 70"
+                              [class.idp-progress-amber]="goal.progress >= 40 && goal.progress < 70"
+                              [class.idp-progress-red]="goal.progress < 40"></div>
+                          </div>
+                          <span class="goal-progress-pct {{ progressTextClass(goal.progress) }}">{{ goal.progress }}%</span>
+                          @if (goal.coachRating) {
+                            <span class="goal-rating-inline">
+                              @for (s of stars; track s) {
+                                <span [class.star-active]="s <= (goal.coachRating ?? 0)">★</span>
+                              }
+                            </span>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Other/Lifestyle goals -->
+            @if ((goalsByPillar()['other']?.length ?? 0) > 0) {
+              <div class="pillar-section">
+                <div class="pillar-section-header">
+                  <div class="pillar-section-title">
+                    <span class="pillar-icon">📚</span>
+                    <span>Lifestyle &amp; Education</span>
+                    <span class="pillar-count">{{ goalsByPillar()['other']?.length ?? 0 }}</span>
+                  </div>
+                </div>
+                <div class="goal-cards-list">
+                  @for (goal of goalsByPillar()['other']; track goal.id) {
+                    <div class="goal-card">
+                      <div class="goal-card-header">
+                        <div class="goal-card-title-wrap">
+                          <span class="goal-card-title">{{ goal.title }}</span>
+                          @if (goal.targetDate) { <span class="goal-card-date">{{ formatDate(goal.targetDate) }}</span> }
+                        </div>
+                        <div class="goal-card-actions">
+                          <select class="icp-select icp-select-sm" [value]="goal.status" (change)="quickSetGoalStatus(goal, $any($event.target).value)">
+                            <option value="not-started">Not Started</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="on-track">On Track</option>
+                            <option value="at-risk">At Risk</option>
+                            <option value="completed">Completed</option>
+                          </select>
+                          <button class="goal-edit-btn" (click)="openEditGoal(goal)">Edit</button>
+                          <button class="goal-delete-btn" (click)="deleteGoal(goal.id)">✕</button>
+                        </div>
+                      </div>
+                      @if (goal.kpi) { <div class="goal-kpi"><span class="goal-kpi-label">KPI</span>{{ goal.kpi }}</div> }
+                      <div class="goal-progress-row">
+                        <div class="idp-progress-bar-wrap" style="flex:1">
+                          <div class="idp-progress-bar" [style.width.%]="goal.progress"
+                            [class.idp-progress-green]="goal.progress >= 70"
+                            [class.idp-progress-amber]="goal.progress >= 40 && goal.progress < 70"
+                            [class.idp-progress-red]="goal.progress < 40"></div>
+                        </div>
+                        <span class="goal-progress-pct {{ progressTextClass(goal.progress) }}">{{ goal.progress }}%</span>
                       </div>
                     </div>
                   }
                 </div>
-              }
-            </div>
+              </div>
+            }
           }
         }
 
@@ -614,22 +744,121 @@
         }
 
 
+        <!-- ════ SWOT TAB ════ -->
+        @if (activeTab() === 'swot') {
+          <div class="swot-section">
+            <div class="swot-header">
+              <div>
+                <h3 class="idp-section-title" style="margin:0">SWOT Analysis</h3>
+                <p class="idp-empty-hint" style="margin:4px 0 0">Evaluate this player's current position across four dimensions.</p>
+              </div>
+              @if (!editingSwot()) {
+                <button class="icp-btn icp-btn-ghost icp-btn-sm" (click)="openEditSwot()">Edit</button>
+              }
+            </div>
+
+            @if (editingSwot()) {
+              <div class="swot-grid">
+                <div class="swot-quadrant swot-strengths">
+                  <div class="swot-quadrant-label">💪 Strengths</div>
+                  <textarea class="icp-textarea swot-textarea" rows="5" placeholder="What does this player do well?"
+                    [value]="swotStrengths()"
+                    (input)="swotStrengths.set($any($event.target).value)"></textarea>
+                </div>
+                <div class="swot-quadrant swot-weaknesses">
+                  <div class="swot-quadrant-label">⚠ Weaknesses</div>
+                  <textarea class="icp-textarea swot-textarea" rows="5" placeholder="Where are the gaps or limitations?"
+                    [value]="swotWeaknesses()"
+                    (input)="swotWeaknesses.set($any($event.target).value)"></textarea>
+                </div>
+                <div class="swot-quadrant swot-opportunities">
+                  <div class="swot-quadrant-label">🚀 Opportunities</div>
+                  <textarea class="icp-textarea swot-textarea" rows="5" placeholder="What external factors could aid development?"
+                    [value]="swotOpportunities()"
+                    (input)="swotOpportunities.set($any($event.target).value)"></textarea>
+                </div>
+                <div class="swot-quadrant swot-threats">
+                  <div class="swot-quadrant-label">🔻 Threats</div>
+                  <textarea class="icp-textarea swot-textarea" rows="5" placeholder="What could hinder or derail progress?"
+                    [value]="swotThreats()"
+                    (input)="swotThreats.set($any($event.target).value)"></textarea>
+                </div>
+              </div>
+              <div class="swot-actions">
+                <button class="icp-btn icp-btn-ghost icp-btn-sm" (click)="cancelEditSwot()">Cancel</button>
+                <button class="icp-btn icp-btn-primary icp-btn-sm" (click)="saveSwot()">Save SWOT</button>
+              </div>
+            } @else {
+              @if (!selectedIdp()!.swot?.strengths && !selectedIdp()!.swot?.weaknesses && !selectedIdp()!.swot?.opportunities && !selectedIdp()!.swot?.threats) {
+                <div class="idp-empty-hint" style="text-align:center; padding:32px 0">No SWOT analysis yet. Click Edit to get started.</div>
+              } @else {
+                <div class="swot-grid">
+                  <div class="swot-quadrant swot-strengths">
+                    <div class="swot-quadrant-label">💪 Strengths</div>
+                    <p class="swot-text">{{ selectedIdp()!.swot?.strengths || '—' }}</p>
+                  </div>
+                  <div class="swot-quadrant swot-weaknesses">
+                    <div class="swot-quadrant-label">⚠ Weaknesses</div>
+                    <p class="swot-text">{{ selectedIdp()!.swot?.weaknesses || '—' }}</p>
+                  </div>
+                  <div class="swot-quadrant swot-opportunities">
+                    <div class="swot-quadrant-label">🚀 Opportunities</div>
+                    <p class="swot-text">{{ selectedIdp()!.swot?.opportunities || '—' }}</p>
+                  </div>
+                  <div class="swot-quadrant swot-threats">
+                    <div class="swot-quadrant-label">🔻 Threats</div>
+                    <p class="swot-text">{{ selectedIdp()!.swot?.threats || '—' }}</p>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        }
+
+
         <!-- ════ ELITE TAB ════ -->
         @if (activeTab() === 'elite' && selectedIdp()!.mode === 'elite') {
 
-          <!-- Holistic Evaluation -->
+          <!-- Holistic Evaluation with sub-skills -->
           <div class="elite-section">
             <h3 class="idp-section-title">📊 Holistic Evaluation</h3>
             <div class="holistic-pillars">
               @for (pillar of holisticPillars; track pillar) {
                 <div class="holistic-pillar">
-                  <div class="holistic-pillar-header">
-                    <span class="holistic-pillar-name">{{ pillar }}</span>
-                    <span class="holistic-pillar-value">{{ holisticEval()[pillar] }} / 10</span>
+                  <!-- Pillar overall score -->
+                  <div class="holistic-pillar-header" (click)="toggleSubPillar(pillar)" style="cursor:pointer">
+                    <div class="holistic-pillar-title-row">
+                      <span class="holistic-pillar-name">{{ pillar }}</span>
+                      <span class="holistic-expand-icon">{{ expandedSubPillar() === pillar ? '▲' : '▼' }}</span>
+                    </div>
+                    <div class="holistic-score-row">
+                      <div class="holistic-mini-bar">
+                        <div class="holistic-mini-fill" [style.width.%]="holisticEval()[pillar] * 10"></div>
+                      </div>
+                      <span class="holistic-pillar-value">{{ holisticEval()[pillar] }} / 10</span>
+                    </div>
                   </div>
                   <input type="range" class="icp-range" min="1" max="10"
                     [value]="holisticEval()[pillar]"
                     (input)="setHolisticPillar(pillar, +$any($event.target).value)" />
+
+                  <!-- Sub-skills accordion -->
+                  @if (expandedSubPillar() === pillar) {
+                    <div class="sub-skills-panel">
+                      <div class="sub-skills-label">Individual Skills</div>
+                      @for (skill of subSkillsByPillar[pillar]; track skill) {
+                        <div class="sub-skill-row">
+                          <span class="sub-skill-name">{{ skill }}</span>
+                          <div class="sub-skill-controls">
+                            <input type="range" class="icp-range sub-skill-range" min="1" max="10"
+                              [value]="subSkillEval()[pillar]?.[skill] ?? 5"
+                              (input)="setSubSkill(pillar, skill, +$any($event.target).value)" />
+                            <span class="sub-skill-value">{{ subSkillEval()[pillar]?.[skill] ?? 5 }}</span>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
                 </div>
               }
             </div>

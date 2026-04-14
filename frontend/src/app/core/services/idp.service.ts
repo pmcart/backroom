@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Idp, IdpMode, IdpStatus, NoteStatus } from '../models/idp.model';
+import { Idp, IdpMode, IdpStatus, NoteStatus, SwotAnalysis } from '../models/idp.model';
 
 export interface CreateIdpPayload {
   playerId: string;
@@ -10,6 +10,14 @@ export interface CreateIdpPayload {
   mode?: IdpMode;
   ageGroup?: string;
   reviewDate?: string;
+  startDate?: string;
+  targetCompletionDate?: string;
+}
+
+export interface TimelinePayload {
+  startDate?: string | null;
+  targetCompletionDate?: string | null;
+  reviewDate?: string | null;
 }
 
 export interface GoalPayload {
@@ -31,6 +39,7 @@ export interface ElitePayload {
   performanceSupport?: string;
   offFieldDevelopment?: string;
   methodologyTags?: string[];
+  subSkillEvaluations?: Record<string, Record<string, number>>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -86,6 +95,18 @@ export class IdpService {
 
   addProgressNote(idpId: string, payload: { content: string; status: NoteStatus }): Observable<Idp> {
     return this.http.post<Idp>(`${this.base}/${idpId}/notes`, payload);
+  }
+
+  // ── SWOT ──────────────────────────────────────────────────────────────────
+
+  updateSwot(idpId: string, payload: Partial<SwotAnalysis>): Observable<Idp> {
+    return this.http.patch<Idp>(`${this.base}/${idpId}/swot`, payload);
+  }
+
+  // ── Timeline ──────────────────────────────────────────────────────────────
+
+  updateTimeline(idpId: string, payload: TimelinePayload): Observable<Idp> {
+    return this.http.patch<Idp>(`${this.base}/${idpId}/timeline`, payload);
   }
 
   // ── Elite fields ──────────────────────────────────────────────────────────

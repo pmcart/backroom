@@ -58,6 +58,12 @@ export class Idp {
   @Column({ nullable: true, type: 'date' })
   reviewDate: string | null;
 
+  @Column({ nullable: true, type: 'date' })
+  startDate: string | null;
+
+  @Column({ nullable: true, type: 'date' })
+  targetCompletionDate: string | null;
+
   @Column({ nullable: true, type: 'text' })
   coachComments: string | null;
 
@@ -83,6 +89,12 @@ export class Idp {
 
   @Column({ nullable: true, type: 'jsonb' })
   methodologyTags: string[] | null;
+
+  @Column({ nullable: true, type: 'jsonb' })
+  swot: { strengths: string; weaknesses: string; opportunities: string; threats: string } | null;
+
+  @Column({ nullable: true, type: 'jsonb' })
+  subSkillEvaluations: Record<string, Record<string, number>> | null;
 
   // ── Relations ─────────────────────────────────────────────────────────────
 

@@ -22,12 +22,21 @@ export interface ProgressNote {
   createdAt: string;
 }
 
+export interface SwotAnalysis {
+  strengths: string;
+  weaknesses: string;
+  opportunities: string;
+  threats: string;
+}
+
 export interface Idp {
   id: string;
   mode: IdpMode;
   status: IdpStatus;
   ageGroup: string | null;
   reviewDate: string | null;
+  startDate: string | null;
+  targetCompletionDate: string | null;
   coachComments: string | null;
   clubId: string;
   squadId: string;
@@ -43,6 +52,8 @@ export interface Idp {
   performanceSupport: string | null;
   offFieldDevelopment: string | null;
   methodologyTags: string[] | null;
+  swot: SwotAnalysis | null;
+  subSkillEvaluations: Record<string, Record<string, number>> | null;
   // Relations
   player: { id: string; firstName: string; lastName: string; position: string | null } | null;
   squad: { id: string; name: string; ageGroup: string } | null;

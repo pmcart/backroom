@@ -20,6 +20,10 @@ export class Idp implements OnInit {
   searchTerm = signal('');
   squadFilter = signal('');
 
+  // ── Detail modal ──────────────────────────────────────────────────────────
+  viewingIdp = signal<IdpModel | null>(null);
+  detailTab  = signal<'overview' | 'goals' | 'notes' | 'elite'>('overview');
+
   ngOnInit() {
     this.idpService.getAll().subscribe({
       next: (data) => { this.idps.set(data); this.loading.set(false); },
@@ -95,6 +99,80 @@ export class Idp implements OnInit {
       .sort((a, b) => a.progress - b.progress)
       .slice(0, 10),
   );
+
+  // ── Detail modal ──────────────────────────────────────────────────────────
+
+  openDetail(idp: IdpModel) {
+    this.viewingIdp.set(idp);
+    this.detailTab.set('overview');
+  }
+
+  closeDetail() { this.viewingIdp.set(null); }
+
+  timelinePercent(idp: IdpModel): number {
+    if (!idp.startDate || !idp.targetCompletionDate) return 0;
+    const start = new Date(idp.startDate).getTime();
+    const end   = new Date(idp.targetCompletionDate).getTime();
+    const now   = Date.now();
+    if (end <= start) return 0;
+    return Math.min(100, Math.max(0, Math.round(((now - start) / (end - start)) * 100)));
+  }
+
+  daysRemaining(idp: IdpModel): number | null {
+    if (!idp.targetCompletionDate) return null;
+    return Math.ceil((new Date(idp.targetCompletionDate).getTime() - Date.now()) / 86400000);
+  }
+
+  formatDate(d: string | null | undefined): string {
+    if (!d) return '—';
+    try { return new Date(d).toLocaleDateString('en-IE', { day: '2-digit', month: 'short', year: 'numeric' }); }
+    catch { return d; }
+  }
+
+  playerInitials(idp: IdpModel): string {
+    return ((idp.player?.firstName?.[0] ?? '') + (idp.player?.lastName?.[0] ?? '')).toUpperCase();
+  }
+
+  goalStatusClass(status: string): string {
+    switch (status) {
+      case 'on-track':    return 'bg-success';
+      case 'at-risk':     return 'bg-danger';
+      case 'completed':   return 'bg-secondary';
+      case 'in-progress': return 'bg-primary';
+      default:            return 'bg-light text-dark border';
+    }
+  }
+
+  goalStatusLabel(status: string): string {
+    switch (status) {
+      case 'not-started': return 'Not Started';
+      case 'in-progress': return 'In Progress';
+      case 'on-track':    return 'On Track';
+      case 'at-risk':     return 'At Risk';
+      case 'completed':   return 'Completed';
+      default:            return status;
+    }
+  }
+
+  noteStatusLabel(status: string): string {
+    switch (status) {
+      case 'on-track':        return 'On Track';
+      case 'needs-attention': return 'Needs Attention';
+      case 'exceeding':       return 'Exceeding';
+      default:                return status;
+    }
+  }
+
+  noteStatusClass(status: string): string {
+    switch (status) {
+      case 'on-track':        return 'text-success';
+      case 'needs-attention': return 'text-warning';
+      case 'exceeding':       return 'text-primary';
+      default:                return 'text-muted';
+    }
+  }
+
+  readonly holisticPillars = ['Technical', 'Tactical', 'Physical', 'Mental', 'Social'];
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 

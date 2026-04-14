@@ -133,6 +133,7 @@
                   <th>Review Date</th>
                   <th>Goals</th>
                   <th>Progress</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -163,6 +164,9 @@
                           {{ idp.progress }}%
                         </small>
                       </div>
+                    </td>
+                    <td>
+                      <button class="btn btn-sm btn-outline-primary" (click)="openDetail(idp)">View</button>
                     </td>
                   </tr>
                 }
@@ -236,9 +240,10 @@
                         <span class="badge bg-warning text-dark ms-1" style="font-size:0.65rem;">Review Due</span>
                       }
                     </div>
-                    <span class="badge {{ progressClass(idp.progress) }} rounded-pill">
-                      {{ idp.progress }}%
-                    </span>
+                    <div class="d-flex align-items-center gap-2">
+                      <span class="badge {{ progressClass(idp.progress) }} rounded-pill">{{ idp.progress }}%</span>
+                      <button class="btn btn-sm btn-outline-primary py-0" style="font-size:0.75rem;" (click)="openDetail(idp)">View</button>
+                    </div>
                   </li>
                 }
               </ul>
@@ -250,4 +255,219 @@
     </div>
   }
 
+}
+
+<!-- ═══ IDP Detail Modal ═══════════════════════════════════════════════════ -->
+@if (viewingIdp()) {
+  <div class="admin-idp-modal-backdrop" (click)="closeDetail()"></div>
+  <div class="admin-idp-modal">
+
+    <!-- Modal Header -->
+    <div class="aim-header">
+      <div class="aim-player-info">
+        <div class="aim-avatar">{{ playerInitials(viewingIdp()!) }}</div>
+        <div>
+          <div class="aim-player-name">{{ viewingIdp()!.player?.firstName }} {{ viewingIdp()!.player?.lastName }}</div>
+          <div class="aim-player-meta">
+            <span class="badge" [class]="viewingIdp()!.mode === 'elite' ? 'bg-primary' : 'bg-secondary'">
+              {{ viewingIdp()!.mode === 'elite' ? 'Elite IDP' : 'Standard IDP' }}
+            </span>
+            <span class="text-muted ms-2 small">{{ viewingIdp()!.squad?.name }}</span>
+            @if (viewingIdp()!.player?.position) {
+              <span class="text-muted ms-1 small">· {{ viewingIdp()!.player?.position }}</span>
+            }
+          </div>
+        </div>
+      </div>
+      <button class="aim-close-btn" (click)="closeDetail()">✕</button>
+    </div>
+
+    <!-- Status + Progress -->
+    <div class="aim-status-row">
+      <span class="badge {{ statusBadgeClass(viewingIdp()!.status) }} me-2">{{ statusLabel(viewingIdp()!.status) }}</span>
+      <div class="d-flex align-items-center gap-2 flex-grow-1">
+        <div class="progress flex-grow-1" style="height:10px;">
+          <div class="progress-bar {{ progressClass(viewingIdp()!.progress) }}" [style.width.%]="viewingIdp()!.progress"></div>
+        </div>
+        <span class="fw-semibold small {{ progressTextClass(viewingIdp()!.progress) }}">{{ viewingIdp()!.progress }}%</span>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    @if (viewingIdp()!.startDate || viewingIdp()!.targetCompletionDate) {
+      <div class="aim-timeline">
+        <div class="aim-timeline-labels">
+          <span class="small text-muted">{{ formatDate(viewingIdp()!.startDate) }}</span>
+          @if (daysRemaining(viewingIdp()!) !== null) {
+            @if ((daysRemaining(viewingIdp()!) ?? 0) < 0) {
+              <span class="small text-danger fw-semibold">{{ (daysRemaining(viewingIdp()!) ?? 0) * -1 }} days overdue</span>
+            } @else {
+              <span class="small text-muted">{{ daysRemaining(viewingIdp()!) }} days remaining</span>
+            }
+          }
+          <span class="small text-muted">{{ formatDate(viewingIdp()!.targetCompletionDate) }}</span>
+        </div>
+        <div class="aim-timeline-track">
+          <div class="aim-timeline-fill" [style.width.%]="timelinePercent(viewingIdp()!)"></div>
+        </div>
+      </div>
+    }
+
+    <!-- Key dates -->
+    <div class="aim-dates-row">
+      @if (viewingIdp()!.ageGroup) {
+        <div class="aim-date-item"><span class="aim-date-label">Age Group</span><span>{{ viewingIdp()!.ageGroup }}</span></div>
+      }
+      @if (viewingIdp()!.reviewDate) {
+        <div class="aim-date-item"><span class="aim-date-label">Review</span><span>{{ formatDate(viewingIdp()!.reviewDate) }}</span></div>
+      }
+      <div class="aim-date-item"><span class="aim-date-label">Created</span><span>{{ formatDate(viewingIdp()!.createdAt) }}</span></div>
+      <div class="aim-date-item"><span class="aim-date-label">Goals</span><span>{{ viewingIdp()!.goals.length }}</span></div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs aim-tabs">
+      <li class="nav-item"><button class="nav-link" [class.active]="detailTab() === 'overview'" (click)="detailTab.set('overview')">Overview</button></li>
+      <li class="nav-item"><button class="nav-link" [class.active]="detailTab() === 'goals'" (click)="detailTab.set('goals')">Goals <span class="badge bg-secondary ms-1">{{ viewingIdp()!.goals.length }}</span></button></li>
+      <li class="nav-item"><button class="nav-link" [class.active]="detailTab() === 'notes'" (click)="detailTab.set('notes')">Notes <span class="badge bg-secondary ms-1">{{ viewingIdp()!.notes.length }}</span></button></li>
+      @if (viewingIdp()!.mode === 'elite') {
+        <li class="nav-item"><button class="nav-link" [class.active]="detailTab() === 'elite'" (click)="detailTab.set('elite')">Elite Profile</button></li>
+      }
+    </ul>
+
+    <div class="aim-tab-body">
+
+      <!-- ── Overview Tab ── -->
+      @if (detailTab() === 'overview') {
+        @if (viewingIdp()!.goals.length === 0) {
+          <p class="text-muted text-center py-4">No goals added yet.</p>
+        } @else {
+          <div class="aim-goal-summary">
+            @for (goal of viewingIdp()!.goals; track goal.id) {
+              <div class="aim-goal-card">
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                  <span class="fw-semibold small">{{ goal.title }}</span>
+                  <span class="badge {{ goalStatusClass(goal.status) }} ms-2" style="font-size:0.65rem;">{{ goalStatusLabel(goal.status) }}</span>
+                </div>
+                @if (goal.category) { <div class="text-muted" style="font-size:0.75rem;">{{ goal.category }}</div> }
+                <div class="d-flex align-items-center gap-2 mt-2">
+                  <div class="progress flex-grow-1" style="height:6px;">
+                    <div class="progress-bar {{ progressClass(goal.progress) }}" [style.width.%]="goal.progress"></div>
+                  </div>
+                  <span class="small {{ progressTextClass(goal.progress) }} fw-semibold" style="min-width:30px;">{{ goal.progress }}%</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+        @if (viewingIdp()!.coachComments) {
+          <div class="aim-comments mt-3">
+            <div class="aim-section-label">Coach Comments</div>
+            <p class="small text-muted mb-0">{{ viewingIdp()!.coachComments }}</p>
+          </div>
+        }
+      }
+
+      <!-- ── Goals Tab ── -->
+      @if (detailTab() === 'goals') {
+        @if (viewingIdp()!.goals.length === 0) {
+          <p class="text-muted text-center py-4">No goals added yet.</p>
+        } @else {
+          @for (goal of viewingIdp()!.goals; track goal.id) {
+            <div class="aim-goal-full">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <div class="fw-semibold">{{ goal.title }}</div>
+                  @if (goal.category) { <div class="text-muted small">{{ goal.category }}</div> }
+                </div>
+                <span class="badge {{ goalStatusClass(goal.status) }}">{{ goalStatusLabel(goal.status) }}</span>
+              </div>
+              @if (goal.description) { <p class="small text-muted mb-2">{{ goal.description }}</p> }
+              <div class="row g-2 mb-2">
+                @if (goal.kpi) {
+                  <div class="col-auto"><span class="aim-kpi-badge">KPI: {{ goal.kpi }}</span></div>
+                }
+                @if (goal.targetDate) {
+                  <div class="col-auto"><span class="aim-kpi-badge">Target: {{ formatDate(goal.targetDate) }}</span></div>
+                }
+                @if (goal.coachRating) {
+                  <div class="col-auto"><span class="aim-kpi-badge">Rating: {{ goal.coachRating }}/5 ★</span></div>
+                }
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <div class="progress flex-grow-1" style="height:8px;">
+                  <div class="progress-bar {{ progressClass(goal.progress) }}" [style.width.%]="goal.progress"></div>
+                </div>
+                <span class="small fw-semibold {{ progressTextClass(goal.progress) }}">{{ goal.progress }}%</span>
+              </div>
+            </div>
+          }
+        }
+      }
+
+      <!-- ── Notes Tab ── -->
+      @if (detailTab() === 'notes') {
+        @if (viewingIdp()!.notes.length === 0) {
+          <p class="text-muted text-center py-4">No progress notes yet.</p>
+        } @else {
+          @for (note of viewingIdp()!.notes; track note.id) {
+            <div class="aim-note">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="small {{ noteStatusClass(note.status) }} fw-semibold">{{ noteStatusLabel(note.status) }}</span>
+                <span class="text-muted" style="font-size:0.75rem;">{{ formatDate(note.createdAt) }}</span>
+              </div>
+              <p class="small mb-0">{{ note.content }}</p>
+            </div>
+          }
+        }
+      }
+
+      <!-- ── Elite Tab ── -->
+      @if (detailTab() === 'elite' && viewingIdp()!.mode === 'elite') {
+        @if (viewingIdp()!.holisticEvaluation) {
+          <div class="aim-section-label mb-2">Holistic Evaluation</div>
+          @for (pillar of holisticPillars; track pillar) {
+            <div class="d-flex align-items-center gap-3 mb-2">
+              <span class="small fw-semibold" style="min-width:80px;">{{ pillar }}</span>
+              <div class="progress flex-grow-1" style="height:8px;">
+                <div class="progress-bar bg-primary" [style.width.%]="(viewingIdp()!.holisticEvaluation?.[pillar] ?? 0) * 10"></div>
+              </div>
+              <span class="small text-muted">{{ viewingIdp()!.holisticEvaluation?.[pillar] ?? '—' }}/10</span>
+            </div>
+          }
+        }
+        @if (viewingIdp()!.primaryPosition) {
+          <div class="aim-section-label mt-3 mb-1">Positional Profile</div>
+          <p class="small mb-1"><strong>Primary:</strong> {{ viewingIdp()!.primaryPosition }}</p>
+          @if (viewingIdp()!.secondaryPosition) {
+            <p class="small mb-1"><strong>Secondary:</strong> {{ viewingIdp()!.secondaryPosition }}</p>
+          }
+          @if (viewingIdp()!.positionalDemands?.length) {
+            <div class="d-flex flex-wrap gap-1 mt-1">
+              @for (d of viewingIdp()!.positionalDemands ?? []; track d) {
+                <span class="badge bg-light text-dark border">{{ d }}</span>
+              }
+            </div>
+          }
+        }
+        @if (viewingIdp()!.methodologyTags?.length) {
+          <div class="aim-section-label mt-3 mb-1">Methodology Tags</div>
+          <div class="d-flex flex-wrap gap-1">
+            @for (tag of viewingIdp()!.methodologyTags ?? []; track tag) {
+              <span class="badge bg-primary bg-opacity-10 text-primary">{{ tag }}</span>
+            }
+          </div>
+        }
+        @if (viewingIdp()!.performanceSupport) {
+          <div class="aim-section-label mt-3 mb-1">Performance Support</div>
+          <p class="small text-muted">{{ viewingIdp()!.performanceSupport }}</p>
+        }
+        @if (viewingIdp()!.offFieldDevelopment) {
+          <div class="aim-section-label mt-3 mb-1">Off-Field Development</div>
+          <p class="small text-muted">{{ viewingIdp()!.offFieldDevelopment }}</p>
+        }
+      }
+
+    </div><!-- aim-tab-body -->
+  </div><!-- admin-idp-modal -->
 }

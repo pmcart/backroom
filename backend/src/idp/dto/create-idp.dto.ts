@@ -21,4 +21,12 @@ export class CreateIdpDto {
   @IsString()
   @IsOptional()
   reviewDate?: string;
+
+  @IsString()
+  @IsOptional()
+  startDate?: string;
+
+  @IsString()
+  @IsOptional()
+  targetCompletionDate?: string;
 }

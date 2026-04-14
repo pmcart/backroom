@@ -1,17 +1,18 @@
+import { LowerCasePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/auth/auth.service';
-import { Idp as IdpModel, IdpGoal, IdpMode, IdpStatus, NoteStatus } from '../../../core/models/idp.model';
+import { Idp as IdpModel, IdpGoal, IdpMode, IdpStatus, NoteStatus, SwotAnalysis } from '../../../core/models/idp.model';
 import { Squad } from '../../../core/models/squad.model';
-import { ElitePayload, GoalPayload, IdpService } from '../../../core/services/idp.service';
+import { ElitePayload, GoalPayload, IdpService, TimelinePayload } from '../../../core/services/idp.service';
 import { SquadsService } from '../../../core/services/squads.service';
 
-type DetailTab = 'overview' | 'goals' | 'notes' | 'elite' | 'reflections';
+type DetailTab = 'overview' | 'goals' | 'swot' | 'notes' | 'elite' | 'reflections';
 
 @Component({
   selector: 'app-idp',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, LowerCasePipe],
   templateUrl: './idp.html',
   styleUrl: './idp.scss',
 })
@@ -33,11 +34,19 @@ export class Idp implements OnInit {
   sidebarSearch   = signal('');
 
   // ── Create IDP form ───────────────────────────────────────────────────────
-  createView       = signal(false);
-  createPlayerId   = signal('');
-  createMode       = signal<IdpMode>('standard');
-  createAgeGroup   = signal('');
-  createReviewDate = signal('');
+  createView              = signal(false);
+  createPlayerId          = signal('');
+  createMode              = signal<IdpMode>('standard');
+  createAgeGroup          = signal('');
+  createReviewDate        = signal('');
+  createStartDate         = signal('');
+  createTargetCompletion  = signal('');
+
+  // ── Timeline editing (detail view) ────────────────────────────────────────
+  editingTimeline       = signal(false);
+  timelineStartDate     = signal('');
+  timelineReviewDate    = signal('');
+  timelineTargetDate    = signal('');
 
   // ── Goal form ─────────────────────────────────────────────────────────────
   showGoalForm   = signal(false);
@@ -57,6 +66,17 @@ export class Idp implements OnInit {
   commentText    = signal('');
   editingComments = signal(false);
 
+  // ── SWOT state ────────────────────────────────────────────────────────────
+  swotStrengths     = signal('');
+  swotWeaknesses    = signal('');
+  swotOpportunities = signal('');
+  swotThreats       = signal('');
+  editingSwot       = signal(false);
+
+  // ── Sub-skill evaluation state ────────────────────────────────────────────
+  expandedSubPillar = signal<string | null>(null);
+  subSkillEval      = signal<Record<string, Record<string, number>>>({});
+
   // ── Elite form state ──────────────────────────────────────────────────────
   holisticEval      = signal<Record<string, number>>({ Technical: 5, Tactical: 5, Physical: 5, Mental: 5, Social: 5 });
   primaryPosition   = signal('');
@@ -68,6 +88,15 @@ export class Idp implements OnInit {
   methodologyTags   = signal<string[]>([]);
 
   readonly holisticPillars = ['Technical', 'Tactical', 'Physical', 'Mental', 'Social'];
+  readonly goalPillars = ['technical', 'tactical', 'physical', 'psychological'] as const;
+
+  readonly subSkillsByPillar: Record<string, string[]> = {
+    Technical: ['Passing', 'Dribbling', 'Shooting', 'Heading', 'First Touch', 'Crossing', 'Finishing'],
+    Tactical:  ['Decision Making', 'Positioning', 'Pressing', 'Transitions', 'Set Pieces', 'Ball Retention'],
+    Physical:  ['Pace', 'Strength', 'Stamina', 'Agility', 'Balance', 'Aerial Ability'],
+    Mental:    ['Concentration', 'Confidence', 'Communication', 'Leadership', 'Resilience', 'Work Rate'],
+    Social:    ['Teamwork', 'Attitude', 'Coachability', 'Body Language', 'Discipline'],
+  };
   readonly allMethodologyTags = [
     'Pressing High', 'Positional Play', 'Transition Speed', 'Ball Retention',
     'Direct Play', 'Width & Depth', 'Set Pieces', 'Defensive Shape',
@@ -107,6 +136,20 @@ export class Idp implements OnInit {
     this.idps().find((i) => i.id === this.selectedIdpId()) ?? null,
   );
 
+  goalsByPillar = computed(() => {
+    const idp = this.selectedIdp();
+    if (!idp) return {} as Record<string, IdpGoal[]>;
+    const result: Record<string, IdpGoal[]> = {
+      technical: [], tactical: [], physical: [], psychological: [], other: [],
+    };
+    for (const goal of idp.goals) {
+      const cat = goal.category ?? 'other';
+      const key = ['technical', 'tactical', 'physical', 'psychological'].includes(cat) ? cat : 'other';
+      result[key].push(goal);
+    }
+    return result;
+  });
+
   availablePlayersForCreate = computed(() => {
     const squad = this.selectedSquad();
     if (!squad) return [];
@@ -141,8 +184,20 @@ export class Idp implements OnInit {
     this.activeTab.set('overview');
     this.showGoalForm.set(false);
     this.editingComments.set(false);
+    this.editingSwot.set(false);
+    this.expandedSubPillar.set(null);
     const idp = this.idps().find((i) => i.id === id);
-    if (idp?.mode === 'elite') this.syncEliteForm(idp);
+    if (idp) {
+      this.syncSwotForm(idp);
+      if (idp.mode === 'elite') this.syncEliteForm(idp);
+    }
+  }
+
+  private syncSwotForm(idp: IdpModel) {
+    this.swotStrengths.set(idp.swot?.strengths ?? '');
+    this.swotWeaknesses.set(idp.swot?.weaknesses ?? '');
+    this.swotOpportunities.set(idp.swot?.opportunities ?? '');
+    this.swotThreats.set(idp.swot?.threats ?? '');
   }
 
   private syncEliteForm(idp: IdpModel) {
@@ -153,6 +208,16 @@ export class Idp implements OnInit {
     this.performanceSupport.set(idp.performanceSupport ?? '');
     this.offFieldDevelopment.set(idp.offFieldDevelopment ?? '');
     this.methodologyTags.set([...(idp.methodologyTags ?? [])]);
+    // Seed sub-skill evals from saved data, default missing skills to 5
+    const saved = idp.subSkillEvaluations ?? {};
+    const result: Record<string, Record<string, number>> = {};
+    for (const pillar of this.holisticPillars) {
+      result[pillar] = {};
+      for (const skill of (this.subSkillsByPillar[pillar] ?? [])) {
+        result[pillar][skill] = saved[pillar]?.[skill] ?? 5;
+      }
+    }
+    this.subSkillEval.set(result);
   }
 
   // ── Create IDP ────────────────────────────────────────────────────────────
@@ -161,6 +226,8 @@ export class Idp implements OnInit {
     this.createMode.set('standard');
     this.createAgeGroup.set(this.selectedSquad()?.ageGroup ?? '');
     this.createReviewDate.set('');
+    this.createStartDate.set('');
+    this.createTargetCompletion.set('');
     this.createView.set(true);
   }
 
@@ -178,6 +245,8 @@ export class Idp implements OnInit {
       mode: this.createMode(),
       ageGroup: this.createAgeGroup() || undefined,
       reviewDate: this.createReviewDate() || undefined,
+      startDate: this.createStartDate() || undefined,
+      targetCompletionDate: this.createTargetCompletion() || undefined,
     }).subscribe({
       next: (idp) => {
         this.idps.update((list) => [...list, idp]);
@@ -317,6 +386,70 @@ export class Idp implements OnInit {
     });
   }
 
+  // ── SWOT ──────────────────────────────────────────────────────────────────
+  openEditSwot() {
+    const idp = this.selectedIdp();
+    if (idp) this.syncSwotForm(idp);
+    this.editingSwot.set(true);
+  }
+
+  cancelEditSwot() { this.editingSwot.set(false); }
+
+  saveSwot() {
+    const idp = this.selectedIdp();
+    if (!idp) return;
+    const payload: Partial<SwotAnalysis> = {
+      strengths:    this.swotStrengths(),
+      weaknesses:   this.swotWeaknesses(),
+      opportunities: this.swotOpportunities(),
+      threats:      this.swotThreats(),
+    };
+    this.idpService.updateSwot(idp.id, payload).subscribe({
+      next: (updated) => { this.patchIdp(updated); this.editingSwot.set(false); },
+    });
+  }
+
+  // ── Goal pillar helpers ────────────────────────────────────────────────────
+  openAddGoalForPillar(pillar: string) {
+    this.editingGoalId.set(null);
+    this.goalTitle.set('');
+    this.goalDescription.set('');
+    this.goalCategory.set(pillar);
+    this.goalTargetDate.set('');
+    this.goalKpi.set('');
+    this.goalProgress.set(0);
+    this.goalStatus.set('not-started');
+    this.goalRating.set(null);
+    this.showGoalForm.set(true);
+  }
+
+  pillarLabel(p: string): string {
+    const labels: Record<string, string> = {
+      technical: 'Technical', tactical: 'Tactical',
+      physical: 'Physical', psychological: 'Psychological', other: 'Other',
+    };
+    return labels[p] ?? p;
+  }
+
+  pillarIcon(p: string): string {
+    const icons: Record<string, string> = {
+      technical: '⚽', tactical: '🧠', physical: '💪', psychological: '🎯', other: '📋',
+    };
+    return icons[p] ?? '📋';
+  }
+
+  // ── Sub-skill evaluations ──────────────────────────────────────────────────
+  toggleSubPillar(pillar: string) {
+    this.expandedSubPillar.set(this.expandedSubPillar() === pillar ? null : pillar);
+  }
+
+  setSubSkill(pillar: string, skill: string, value: number) {
+    this.subSkillEval.update((s) => ({
+      ...s,
+      [pillar]: { ...(s[pillar] ?? {}), [skill]: value },
+    }));
+  }
+
   // ── Elite ─────────────────────────────────────────────────────────────────
   saveElite() {
     const idp = this.selectedIdp();
@@ -330,6 +463,7 @@ export class Idp implements OnInit {
       performanceSupport:  this.performanceSupport() || undefined,
       offFieldDevelopment: this.offFieldDevelopment() || undefined,
       methodologyTags:     this.methodologyTags(),
+      subSkillEvaluations: this.subSkillEval(),
     };
     this.idpService.updateElite(idp.id, payload).subscribe({
       next: (updated) => { this.patchIdp(updated); this.saving.set(false); },
@@ -356,6 +490,46 @@ export class Idp implements OnInit {
 
   setHolisticPillar(pillar: string, value: number) {
     this.holisticEval.update((e) => ({ ...e, [pillar]: value }));
+  }
+
+  // ── Timeline ──────────────────────────────────────────────────────────────
+  openEditTimeline() {
+    const idp = this.selectedIdp();
+    if (!idp) return;
+    this.timelineStartDate.set(idp.startDate ?? '');
+    this.timelineReviewDate.set(idp.reviewDate ?? '');
+    this.timelineTargetDate.set(idp.targetCompletionDate ?? '');
+    this.editingTimeline.set(true);
+  }
+
+  cancelEditTimeline() { this.editingTimeline.set(false); }
+
+  saveTimeline() {
+    const idp = this.selectedIdp();
+    if (!idp) return;
+    const payload: TimelinePayload = {
+      startDate: this.timelineStartDate() || null,
+      reviewDate: this.timelineReviewDate() || null,
+      targetCompletionDate: this.timelineTargetDate() || null,
+    };
+    this.idpService.updateTimeline(idp.id, payload).subscribe({
+      next: (updated) => { this.patchIdp(updated); this.editingTimeline.set(false); },
+    });
+  }
+
+  timelinePercent(idp: IdpModel): number {
+    if (!idp.startDate || !idp.targetCompletionDate) return 0;
+    const start = new Date(idp.startDate).getTime();
+    const end   = new Date(idp.targetCompletionDate).getTime();
+    const now   = Date.now();
+    if (end <= start) return 0;
+    return Math.min(100, Math.max(0, Math.round(((now - start) / (end - start)) * 100)));
+  }
+
+  daysRemaining(idp: IdpModel): number | null {
+    if (!idp.targetCompletionDate) return null;
+    const diff = new Date(idp.targetCompletionDate).getTime() - Date.now();
+    return Math.ceil(diff / 86400000);
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────

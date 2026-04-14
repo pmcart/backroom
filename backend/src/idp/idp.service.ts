@@ -7,6 +7,8 @@ import { CreateIdpDto } from './dto/create-idp.dto';
 import { UpdateCommentsDto } from './dto/update-comments.dto';
 import { UpdateEliteDto } from './dto/update-elite.dto';
 import { UpdateGoalDto } from './dto/update-goal.dto';
+import { UpdateSwotDto } from './dto/update-swot.dto';
+import { UpdateTimelineDto } from './dto/update-timeline.dto';
 import { IdpGoal } from './entities/idp-goal.entity';
 import { IdpProgressNote } from './entities/idp-progress-note.entity';
 import { Idp, IdpStatus } from './entities/idp.entity';
@@ -112,6 +114,33 @@ export class IdpService {
     return this.findOne(idpId, clubId);
   }
 
+  // ── Timeline ──────────────────────────────────────────────────────────────
+
+  async updateTimeline(id: string, dto: UpdateTimelineDto, clubId: string): Promise<any> {
+    const idp = await this.idpRepo.findOne({ where: { id, clubId } });
+    if (!idp) throw new NotFoundException('IDP not found');
+    if (dto.startDate !== undefined) idp.startDate = dto.startDate;
+    if (dto.targetCompletionDate !== undefined) idp.targetCompletionDate = dto.targetCompletionDate;
+    if (dto.reviewDate !== undefined) idp.reviewDate = dto.reviewDate;
+    await this.idpRepo.save(idp);
+    return this.findOne(id, clubId);
+  }
+
+  // ── SWOT ──────────────────────────────────────────────────────────────────
+
+  async updateSwot(id: string, dto: UpdateSwotDto, clubId: string): Promise<any> {
+    const idp = await this.idpRepo.findOne({ where: { id, clubId } });
+    if (!idp) throw new NotFoundException('IDP not found');
+    idp.swot = {
+      strengths: dto.strengths ?? idp.swot?.strengths ?? '',
+      weaknesses: dto.weaknesses ?? idp.swot?.weaknesses ?? '',
+      opportunities: dto.opportunities ?? idp.swot?.opportunities ?? '',
+      threats: dto.threats ?? idp.swot?.threats ?? '',
+    };
+    await this.idpRepo.save(idp);
+    return this.findOne(id, clubId);
+  }
+
   // ── Elite fields ──────────────────────────────────────────────────────────
 
   async updateElite(id: string, dto: UpdateEliteDto, clubId: string): Promise<any> {
@@ -132,6 +161,8 @@ export class IdpService {
       status: idp.status,
       ageGroup: idp.ageGroup,
       reviewDate: idp.reviewDate,
+      startDate: idp.startDate ?? null,
+      targetCompletionDate: idp.targetCompletionDate ?? null,
       coachComments: idp.coachComments,
       clubId: idp.clubId,
       squadId: idp.squadId,
@@ -147,6 +178,8 @@ export class IdpService {
       performanceSupport: idp.performanceSupport ?? null,
       offFieldDevelopment: idp.offFieldDevelopment ?? null,
       methodologyTags: idp.methodologyTags ?? null,
+      swot: idp.swot ?? null,
+      subSkillEvaluations: idp.subSkillEvaluations ?? null,
       // Relations
       player: idp.player
         ? { id: idp.player.id, firstName: idp.player.firstName, lastName: idp.player.lastName, position: idp.player.position }

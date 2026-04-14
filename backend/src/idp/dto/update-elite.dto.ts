@@ -28,4 +28,8 @@ export class UpdateEliteDto {
   @IsArray()
   @IsOptional()
   methodologyTags?: string[];
+
+  @IsObject()
+  @IsOptional()
+  subSkillEvaluations?: Record<string, Record<string, number>>;
 }

@@ -6,6 +6,8 @@ import { CreateIdpDto } from './dto/create-idp.dto';
 import { UpdateCommentsDto } from './dto/update-comments.dto';
 import { UpdateEliteDto } from './dto/update-elite.dto';
 import { UpdateGoalDto } from './dto/update-goal.dto';
+import { UpdateSwotDto } from './dto/update-swot.dto';
+import { UpdateTimelineDto } from './dto/update-timeline.dto';
 import { IdpStatus } from './entities/idp.entity';
 import { IdpService } from './idp.service';
 
@@ -85,6 +87,20 @@ export class IdpController {
   @Post(':id/notes')
   addProgressNote(@Param('id') id: string, @Body() dto: AddProgressNoteDto, @Request() req: any) {
     return this.idpService.addProgressNote(id, dto, req.user.clubId);
+  }
+
+  // ── Timeline ──────────────────────────────────────────────────────────────
+
+  @Patch(':id/timeline')
+  updateTimeline(@Param('id') id: string, @Body() dto: UpdateTimelineDto, @Request() req: any) {
+    return this.idpService.updateTimeline(id, dto, req.user.clubId);
+  }
+
+  // ── SWOT ──────────────────────────────────────────────────────────────────
+
+  @Patch(':id/swot')
+  updateSwot(@Param('id') id: string, @Body() dto: UpdateSwotDto, @Request() req: any) {
+    return this.idpService.updateSwot(id, dto, req.user.clubId);
   }
 
   // ── Elite fields ──────────────────────────────────────────────────────────
