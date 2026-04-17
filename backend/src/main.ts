@@ -30,7 +30,7 @@ async function bootstrap() {
   // SPA fallback — any GET that didn't match an /api/* route serves index.html
   // so Angular's client-side router handles it on refresh
   const indexPath = join(__dirname, '..', 'public', 'index.html');
-  app.getHttpAdapter().get('*', (_req: any, res: any) => {
+  app.getHttpAdapter().get('/{*path}', (_req: any, res: any) => {
     if (existsSync(indexPath)) {
       res.sendFile(indexPath);
     } else {
