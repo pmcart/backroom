@@ -1,9 +1,8 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { existsSync } from 'fs';
-import { join } from 'path';
 import * as dotenv from 'dotenv';
 import { AppModule } from './app.module';
+import { SpaFallbackFilter } from './common/filters/spa-fallback.filter';
 import { ensureDatabase } from './database/ensure-database';
 
 dotenv.config();
@@ -23,20 +22,7 @@ async function bootstrap() {
     : ['http://localhost:4200'];
   app.enableCors({ origin: allowedOrigins, credentials: true });
   app.setGlobalPrefix('api', { exclude: ['/'] });
-
-  // Initialise NestJS so all API routes are registered before the SPA catch-all
-  await app.init();
-
-  // SPA fallback — any GET that didn't match an /api/* route serves index.html
-  // so Angular's client-side router handles it on refresh
-  const indexPath = join(__dirname, '..', 'public', 'index.html');
-  app.getHttpAdapter().get('/{*path}', (_req: any, res: any) => {
-    if (existsSync(indexPath)) {
-      res.sendFile(indexPath);
-    } else {
-      res.status(404).json({ message: 'Not found' });
-    }
-  });
+  app.useGlobalFilters(new SpaFallbackFilter());
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port, '0.0.0.0');
