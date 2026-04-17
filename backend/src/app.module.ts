@@ -13,6 +13,8 @@ import { IdpProgressNote } from './idp/entities/idp-progress-note.entity';
 import { Idp } from './idp/entities/idp.entity';
 import { IdpModule } from './idp/idp.module';
 import { Player } from './players/entities/player.entity';
+import { MethodologyConfig } from './methodology/entities/methodology.entity';
+import { MethodologyModule } from './methodology/methodology.module';
 import { ScheduleEntry } from './schedule/entities/schedule-entry.entity';
 import { ScheduleModule } from './schedule/schedule.module';
 import { SessionPlan } from './sessions/entities/session-plan.entity';
@@ -38,7 +40,7 @@ import { UsersModule } from './users/users.module';
             type: 'postgres',
             url: databaseUrl,
             ssl: { rejectUnauthorized: false },
-            entities: [User, Club, Squad, Player, CoachAssignment, Idp, IdpGoal, IdpProgressNote, SessionPlan, ScheduleEntry],
+            entities: [User, Club, Squad, Player, CoachAssignment, Idp, IdpGoal, IdpProgressNote, SessionPlan, ScheduleEntry, MethodologyConfig],
             synchronize: true,
             logging: false,
           };
@@ -50,7 +52,7 @@ import { UsersModule } from './users/users.module';
           username: config.get<string>('DB_USER', 'postgres'),
           password: config.get<string>('DB_PASS', 'postgres'),
           database: config.get<string>('DB_NAME', 'backroom'),
-          entities: [User, Club, Squad, Player, CoachAssignment, Idp, IdpGoal, IdpProgressNote, SessionPlan, ScheduleEntry],
+          entities: [User, Club, Squad, Player, CoachAssignment, Idp, IdpGoal, IdpProgressNote, SessionPlan, ScheduleEntry, MethodologyConfig],
           synchronize: true,
           logging: false,
         };
@@ -64,6 +66,7 @@ import { UsersModule } from './users/users.module';
     IdpModule,
     SessionsModule,
     ScheduleModule,
+    MethodologyModule,
   ],
 })
 export class AppModule {}

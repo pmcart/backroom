@@ -1,14 +1,44 @@
 <!-- Page header -->
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-4 no-print">
   <div>
     <h4 class="mb-1 fw-semibold">Club Methodology Hub</h4>
     <p class="text-muted mb-0 small">Football framework, playing philosophy, and development reference library</p>
   </div>
-  <span class="badge text-bg-secondary">Read-only</span>
+  <div class="d-flex align-items-center gap-2">
+    @if (isEditing()) {
+      <span class="badge text-bg-warning text-dark">
+        <i class="bi bi-pencil-fill me-1"></i>Editing
+      </span>
+      <button class="btn btn-sm btn-success" (click)="saveChanges()" [disabled]="isSaving()">
+        @if (isSaving()) {
+          <span class="spinner-border spinner-border-sm me-1"></span>Saving...
+        } @else {
+          <i class="bi bi-check-lg me-1"></i>Save Changes
+        }
+      </button>
+      <button class="btn btn-sm btn-outline-secondary" (click)="cancelEdit()">
+        Cancel
+      </button>
+    } @else {
+      <button class="btn btn-sm btn-outline-secondary" (click)="printMethodology()">
+        <i class="bi bi-printer me-1"></i>Print PDF
+      </button>
+      <button class="btn btn-sm btn-outline-primary" (click)="enterEditMode()">
+        <i class="bi bi-pencil me-1"></i>Edit Methodology
+      </button>
+    }
+  </div>
+</div>
+
+<!-- Print header (only visible in print) -->
+<div class="print-only mb-4">
+  <h3 class="fw-bold mb-1">Club Methodology Hub</h3>
+  <p class="text-muted mb-0">Football framework, playing philosophy, and development reference library</p>
+  <hr>
 </div>
 
 <!-- Info banner -->
-<div class="d-flex gap-2 align-items-start mb-4 p-3 rounded" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2)">
+<div class="d-flex gap-2 align-items-start mb-4 p-3 rounded no-print" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2)">
   <i class="bi bi-book-half fs-5 flex-shrink-0 text-danger"></i>
   <div>
     <strong>Academy Reference System</strong>
@@ -20,7 +50,7 @@
 </div>
 
 <!-- Tabs -->
-<ul class="nav nav-tabs mb-4">
+<ul class="nav nav-tabs mb-4 no-print">
   <li class="nav-item">
     <button class="nav-link" [class.active]="activeTab() === 'identity'" (click)="activeTab.set('identity')">
       <i class="bi bi-shield-fill me-1"></i>Academy Identity
@@ -34,6 +64,11 @@
   <li class="nav-item">
     <button class="nav-link" [class.active]="activeTab() === 'development'" (click)="activeTab.set('development')">
       <i class="bi bi-layers-fill me-1"></i>Development Framework
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" [class.active]="activeTab() === 'profiles'" (click)="activeTab.set('profiles')">
+      <i class="bi bi-person-badge-fill me-1"></i>Player Profiles
     </button>
   </li>
   <li class="nav-item">
@@ -51,16 +86,16 @@
 
   <!-- Playing Philosophy -->
   <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header border-bottom">
-      <h6 class="mb-0 fw-semibold"><i class="bi bi-shield-fill text-danger me-2"></i>Playing Philosophy</h6>
+    <div class="card-header border-bottom d-flex align-items-center gap-2">
+      <h6 class="mb-0 fw-semibold flex-grow-1"><i class="bi bi-shield-fill text-danger me-2"></i>Playing Philosophy</h6>
     </div>
     <div class="card-body">
-      <p class="mb-0 text-body lh-lg">
-        Shelbourne FC Academy is committed to developing technically excellent, tactically intelligent footballers
-        who are brave on the ball and relentless without it. We play a possession-based, attacking style built from
-        the back, with high pressing and fast transitions. Every player, regardless of age group, learns to play
-        the Shelbourne way.
-      </p>
+      @if (isEditing()) {
+        <textarea class="form-control" [(ngModel)]="draft.philosophy" rows="4"
+          placeholder="Describe your academy's playing philosophy..."></textarea>
+      } @else {
+        <p class="mb-0 text-body lh-lg">{{ data.philosophy }}</p>
+      }
     </div>
   </div>
 
@@ -73,11 +108,33 @@
           <h6 class="mb-0 fw-semibold"><i class="bi bi-bullseye text-danger me-2"></i>Core Principles</h6>
         </div>
         <div class="card-body">
-          @for (p of corePrinciples; track p.title) {
-            <div class="p-3 rounded bg-light mb-2">
-              <div class="fw-semibold small">{{ p.title }}</div>
-              <div class="text-muted" style="font-size:0.8rem;margin-top:2px">{{ p.desc }}</div>
-            </div>
+          @if (isEditing()) {
+            @for (p of draft.corePrinciples; track $index; let i = $index) {
+              <div class="mb-2 p-2 border rounded bg-light position-relative">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <input class="form-control form-control-sm fw-semibold"
+                    [(ngModel)]="draft.corePrinciples[i].title"
+                    placeholder="Principle title">
+                  <button class="btn btn-sm btn-outline-danger flex-shrink-0"
+                    (click)="removePrinciple(i)" title="Remove">
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                </div>
+                <textarea class="form-control form-control-sm"
+                  [(ngModel)]="draft.corePrinciples[i].desc"
+                  rows="2" placeholder="Description"></textarea>
+              </div>
+            }
+            <button class="btn btn-sm btn-outline-primary mt-1 w-100" (click)="addPrinciple()">
+              <i class="bi bi-plus-circle me-1"></i>Add Principle
+            </button>
+          } @else {
+            @for (p of data.corePrinciples; track p.title) {
+              <div class="p-3 rounded bg-light mb-2">
+                <div class="fw-semibold small">{{ p.title }}</div>
+                <div class="text-muted" style="font-size:0.8rem;margin-top:2px">{{ p.desc }}</div>
+              </div>
+            }
           }
         </div>
       </div>
@@ -94,13 +151,15 @@
             <div class="d-flex align-items-center gap-3 p-3 rounded bg-light mb-2">
               <span class="badge rounded-circle bg-danger p-1">&nbsp;</span>
               <span class="fw-semibold small flex-grow-1">{{ v.label }}</span>
-              <button
-                class="btn btn-sm btn-outline-secondary py-0 px-2"
-                style="font-size:0.75rem"
-                (click)="copyTag(v.id)"
-              >
-                <i [class]="'bi me-1 ' + (isCopied(v.id) ? 'bi-check-lg text-success' : 'bi-tag')"></i>Tag
-              </button>
+              @if (!isEditing()) {
+                <button
+                  class="btn btn-sm btn-outline-secondary py-0 px-2"
+                  style="font-size:0.75rem"
+                  (click)="copyTag(v.id)"
+                >
+                  <i [class]="'bi me-1 ' + (isCopied(v.id) ? 'bi-check-lg text-success' : 'bi-tag')"></i>Tag
+                </button>
+              }
             </div>
           }
         </div>
@@ -110,24 +169,48 @@
   </div>
 
   <!-- Non-Negotiables -->
-  <div class="card border-0 shadow-sm">
+  <div class="card border-0 shadow-sm mb-4">
     <div class="card-header border-bottom">
       <h6 class="mb-0 fw-semibold"><i class="bi bi-exclamation-circle-fill text-danger me-2"></i>Non-Negotiables</h6>
       <small class="text-muted">Standards that apply to every player, every session, every game</small>
     </div>
     <div class="card-body">
-      <div class="row g-2">
-        @for (item of nonNegotiables; track item) {
-          <div class="col-md-6">
-            <div class="d-flex align-items-start gap-2 p-3 rounded border border-danger border-opacity-25 bg-danger bg-opacity-10">
-              <i class="bi bi-dot text-danger fs-5 flex-shrink-0" style="margin-top:-2px"></i>
-              <span class="small">{{ item }}</span>
+      @if (isEditing()) {
+        <div class="row g-2">
+          @for (item of draft.nonNegotiables; track $index; let i = $index) {
+            <div class="col-md-6">
+              <div class="d-flex align-items-center gap-2">
+                <input class="form-control form-control-sm"
+                  [(ngModel)]="draft.nonNegotiables[i]"
+                  placeholder="Non-negotiable standard">
+                <button class="btn btn-sm btn-outline-danger flex-shrink-0"
+                  (click)="removeNonNegotiable(i)" title="Remove">
+                  <i class="bi bi-trash3"></i>
+                </button>
+              </div>
             </div>
-          </div>
-        }
-      </div>
+          }
+        </div>
+        <button class="btn btn-sm btn-outline-primary mt-3" (click)="addNonNegotiable()">
+          <i class="bi bi-plus-circle me-1"></i>Add Non-Negotiable
+        </button>
+      } @else {
+        <div class="row g-2">
+          @for (item of data.nonNegotiables; track item) {
+            <div class="col-md-6">
+              <div class="d-flex align-items-start gap-2 p-3 rounded border border-danger border-opacity-25 bg-danger bg-opacity-10">
+                <i class="bi bi-dot text-danger fs-5 flex-shrink-0" style="margin-top:-2px"></i>
+                <span class="small">{{ item }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
     </div>
   </div>
+
+  <!-- Custom sections for Identity tab -->
+  <ng-container *ngTemplateOutlet="customSectionsTpl; context: { tab: 'identity' }"></ng-container>
 
 }
 
@@ -151,7 +234,6 @@
       <div class="card-body p-0">
         @for (principle of phase.principles; let i = $index; track principle.title) {
           <div class="border-bottom last-no-border">
-            <!-- Accordion header -->
             <button
               class="accordion-toggle btn btn-link text-start w-100 p-3 text-decoration-none text-body d-flex align-items-center gap-2"
               (click)="togglePrinciple(phase.id + '-' + i)"
@@ -164,7 +246,6 @@
               <i [class]="'bi ' + (isExpanded(phase.id + '-' + i) ? 'bi-chevron-up' : 'bi-chevron-down') + ' text-muted'"></i>
             </button>
 
-            <!-- Accordion body -->
             @if (isExpanded(phase.id + '-' + i)) {
               <div class="px-4 pb-4">
                 <div class="row g-3">
@@ -224,6 +305,9 @@
     </div>
   }
 
+  <!-- Custom sections for Game Model tab -->
+  <ng-container *ngTemplateOutlet="customSectionsTpl; context: { tab: 'game-model' }"></ng-container>
+
 }
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
@@ -260,10 +344,160 @@
     </div>
   }
 
+  <!-- Custom sections for Development tab -->
+  <ng-container *ngTemplateOutlet="customSectionsTpl; context: { tab: 'development' }"></ng-container>
+
 }
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-<!-- 4. ALIGNMENT TAGS                                                          -->
+<!-- 4. PLAYER PROFILES                                                         -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+@if (activeTab() === 'profiles') {
+
+  <!-- Development Philosophy -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header border-bottom">
+      <h6 class="mb-0 fw-semibold"><i class="bi bi-person-badge-fill text-danger me-2"></i>Player Development Philosophy</h6>
+    </div>
+    <div class="card-body">
+      @if (isEditing()) {
+        <textarea class="form-control" [(ngModel)]="draft.playerDevelopmentPhilosophy" rows="3"
+          placeholder="Describe how your club approaches player development across all positions..."></textarea>
+      } @else {
+        <p class="mb-0 text-body lh-lg">{{ data.playerDevelopmentPhilosophy }}</p>
+      }
+    </div>
+  </div>
+
+  <!-- Positional Profiles -->
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <h6 class="mb-0 fw-semibold"><i class="bi bi-diagram-2-fill text-danger me-2"></i>Positional Profiles</h6>
+    <span class="badge text-bg-secondary">
+      {{ (isEditing() ? draft : data).playerPositions.length }} positions
+    </span>
+    @if (isEditing()) {
+      <button class="btn btn-sm btn-outline-primary ms-auto" (click)="addPlayerPosition()">
+        <i class="bi bi-plus-circle me-1"></i>Add Position
+      </button>
+    }
+  </div>
+
+  <!-- Position cards (view mode) -->
+  @if (!isEditing()) {
+    <div class="row g-4 mb-4">
+      @for (pos of data.playerPositions; track pos.id) {
+        <div class="col-md-6">
+          <div class="card border-0 shadow-sm h-100 profile-card">
+            <div class="card-header border-bottom d-flex align-items-center gap-2">
+              <div class="profile-icon bg-danger bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                style="width:36px;height:36px">
+                <i class="bi bi-person-fill text-danger"></i>
+              </div>
+              <div class="flex-grow-1">
+                <h6 class="mb-0 fw-semibold">{{ pos.position }}</h6>
+                <small class="text-muted">{{ pos.ageGroups }}</small>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <div class="label-xs mb-1">Roles</div>
+                <div class="d-flex flex-wrap gap-1">
+                  @for (role of pos.roles.split('·'); track role) {
+                    @if (role.trim()) {
+                      <span class="badge text-bg-light border text-dark" style="font-size:0.75rem">{{ role.trim() }}</span>
+                    }
+                  }
+                </div>
+              </div>
+              <div class="mb-3">
+                <div class="label-xs mb-1">Responsibilities</div>
+                <p class="mb-0 small text-muted lh-base">{{ pos.responsibilities }}</p>
+              </div>
+              <div class="mb-3 p-3 rounded" style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15)">
+                <div class="label-xs text-danger mb-1">The Player We Want</div>
+                <p class="mb-0 small lh-base fst-italic">{{ pos.playerType }}</p>
+              </div>
+              <div>
+                <div class="label-xs mb-1">Key Attributes</div>
+                <div class="d-flex flex-wrap gap-1">
+                  @for (attr of pos.keyAttributes.split('·'); track attr) {
+                    @if (attr.trim()) {
+                      <span class="badge rounded-pill text-bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25"
+                        style="font-size:0.7rem">{{ attr.trim() }}</span>
+                    }
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Position cards (edit mode) -->
+  @if (isEditing()) {
+    <div class="mb-4">
+      @for (pos of draft.playerPositions; track pos.id; let i = $index) {
+        <div class="card border-0 shadow-sm mb-3 edit-card">
+          <div class="card-header border-bottom d-flex align-items-center gap-2">
+            <i class="bi bi-grip-vertical text-muted"></i>
+            <input class="form-control form-control-sm fw-semibold"
+              [(ngModel)]="draft.playerPositions[i].position"
+              placeholder="Position name"
+              style="max-width:200px">
+            <input class="form-control form-control-sm text-muted ms-2"
+              [(ngModel)]="draft.playerPositions[i].ageGroups"
+              placeholder="Age groups (e.g. All Age Groups)"
+              style="max-width:220px">
+            <button class="btn btn-sm btn-outline-danger ms-auto"
+              (click)="removePlayerPosition(pos.id)" title="Remove position">
+              <i class="bi bi-trash3"></i>
+            </button>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="label-xs mb-1">Roles <span class="text-muted fw-normal">(separate with ·)</span></label>
+                <input class="form-control form-control-sm"
+                  [(ngModel)]="draft.playerPositions[i].roles"
+                  placeholder="e.g. Sweeper-keeper · Distributor · Last line of defence">
+              </div>
+              <div class="col-md-6">
+                <label class="label-xs mb-1">Responsibilities</label>
+                <textarea class="form-control form-control-sm"
+                  [(ngModel)]="draft.playerPositions[i].responsibilities"
+                  rows="3" placeholder="What does this player do in the team?"></textarea>
+              </div>
+              <div class="col-md-6">
+                <label class="label-xs mb-1">The Player We Want</label>
+                <textarea class="form-control form-control-sm"
+                  [(ngModel)]="draft.playerPositions[i].playerType"
+                  rows="3" placeholder="Describe the type of player your club wants to develop in this position..."></textarea>
+              </div>
+              <div class="col-12">
+                <label class="label-xs mb-1">Key Attributes <span class="text-muted fw-normal">(separate with ·)</span></label>
+                <input class="form-control form-control-sm"
+                  [(ngModel)]="draft.playerPositions[i].keyAttributes"
+                  placeholder="e.g. Distribution · Commanding presence · Decision-making">
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+      <button class="btn btn-outline-primary btn-sm w-100" (click)="addPlayerPosition()">
+        <i class="bi bi-plus-circle me-1"></i>Add Position
+      </button>
+    </div>
+  }
+
+  <!-- Custom sections for Profiles tab -->
+  <ng-container *ngTemplateOutlet="customSectionsTpl; context: { tab: 'profiles' }"></ng-container>
+
+}
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- 5. ALIGNMENT TAGS                                                          -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 @if (activeTab() === 'tags') {
 
@@ -280,7 +514,6 @@
     </div>
     <div class="card-body">
 
-      <!-- Game Model Principles -->
       <div class="mb-4">
         <h6 class="fw-semibold mb-3">
           <i class="bi bi-bullseye text-danger me-2"></i>Game Model Principles
@@ -302,7 +535,6 @@
 
       <hr>
 
-      <!-- Development Pillars -->
       <div class="mb-4">
         <h6 class="fw-semibold mb-3">
           <i class="bi bi-layers-fill text-danger me-2"></i>Development Pillars
@@ -324,7 +556,6 @@
 
       <hr>
 
-      <!-- Academy Values -->
       <div class="mb-4">
         <h6 class="fw-semibold mb-3">
           <i class="bi bi-shield-fill text-danger me-2"></i>Academy Values
@@ -345,7 +576,6 @@
 
       <hr>
 
-      <!-- How Tags Work -->
       <div class="p-3 rounded bg-light">
         <h6 class="fw-semibold mb-3">How Tags Work</h6>
         <div class="row g-3">
@@ -373,4 +603,54 @@
     </div>
   </div>
 
+  <!-- Custom sections for Tags tab -->
+  <ng-container *ngTemplateOutlet="customSectionsTpl; context: { tab: 'tags' }"></ng-container>
+
 }
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- CUSTOM SECTIONS TEMPLATE                                                   -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<ng-template #customSectionsTpl let-tab="tab">
+
+  <!-- Existing custom sections -->
+  @if (isEditing()) {
+    @for (section of getDraftCustomSections(tab); track section.id) {
+      <div class="card border-0 shadow-sm mb-3 edit-card">
+        <div class="card-header border-bottom d-flex align-items-center gap-2">
+          <i class="bi bi-layout-text-sidebar text-muted"></i>
+          <input class="form-control form-control-sm fw-semibold flex-grow-1"
+            [(ngModel)]="section.title"
+            placeholder="Section title">
+          <button class="btn btn-sm btn-outline-danger ms-1 flex-shrink-0"
+            (click)="removeCustomSection(tab, section.id)" title="Remove section">
+            <i class="bi bi-trash3"></i>
+          </button>
+        </div>
+        <div class="card-body">
+          <textarea class="form-control"
+            [(ngModel)]="section.content"
+            rows="5"
+            placeholder="Add content for this section..."></textarea>
+        </div>
+      </div>
+    }
+    <button class="btn btn-outline-secondary btn-sm w-100 mb-4" (click)="addCustomSection(tab)">
+      <i class="bi bi-plus-circle me-1"></i>Add Custom Section
+    </button>
+  } @else {
+    @for (section of getCustomSections(tab); track section.id) {
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header border-bottom">
+          <h6 class="mb-0 fw-semibold">
+            <i class="bi bi-layout-text-sidebar text-danger me-2"></i>{{ section.title }}
+          </h6>
+        </div>
+        <div class="card-body">
+          <p class="mb-0 text-body" style="white-space:pre-wrap;line-height:1.7">{{ section.content }}</p>
+        </div>
+      </div>
+    }
+  }
+
+</ng-template>

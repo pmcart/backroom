@@ -47,3 +47,81 @@
 .nav-link {
   cursor: pointer;
 }
+
+// ── Edit mode card highlight ──────────────────────────────────────────────────
+
+.edit-card {
+  border: 1px dashed rgba(13, 110, 253, 0.3) !important;
+  background-color: rgba(13, 110, 253, 0.02);
+}
+
+// ── Label xs utility ─────────────────────────────────────────────────────────
+
+.label-xs {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #6c757d;
+}
+
+// ── Player profile cards ──────────────────────────────────────────────────────
+
+.profile-card {
+  transition: box-shadow 0.15s ease;
+
+  &:hover {
+    box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.1) !important;
+  }
+}
+
+// ── Print styles ──────────────────────────────────────────────────────────────
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  // Show all tab content (not just active)
+  // The browser only prints what's rendered — all tabs except the active
+  // one are hidden by Angular's @if, so the current tab's content prints.
+
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #dee2e6 !important;
+    break-inside: avoid;
+    margin-bottom: 1rem !important;
+  }
+
+  .accordion-toggle .bi-chevron-up,
+  .accordion-toggle .bi-chevron-down {
+    display: none;
+  }
+
+  .btn {
+    display: none !important;
+  }
+
+  .badge {
+    border: 1px solid #dee2e6 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    font-size: 11pt;
+  }
+
+  h4, h5, h6 {
+    break-after: avoid;
+  }
+}
