@@ -17,7 +17,7 @@ import { Request, Response } from 'express';
  */
 @Catch()
 export class SpaFallbackFilter implements ExceptionFilter {
-  private readonly indexPath = join(__dirname, '..', '..', 'public', 'index.html');
+  private readonly indexPath = join(__dirname, '..', '..', '..', 'public', 'index.html');
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
