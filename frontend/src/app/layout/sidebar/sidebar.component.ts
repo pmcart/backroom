@@ -108,6 +108,7 @@ const ADMIN_NAV: NavItem[] = [
   { label: 'Dashboard', icon: 'bi-speedometer2', route: '/admin/dashboard' },
   { label: 'Squads', icon: 'bi-people-fill', route: '/admin/squads' },
   { label: 'IDP Management', icon: 'bi-person-lines-fill', route: '/admin/idp' },
+  { label: 'Session Plans', icon: 'bi-clipboard2-fill', route: '/admin/sessions' },
   { label: 'Weekly Schedule', icon: 'bi-calendar3', route: '/admin/planning' },
   { label: 'Monitoring', icon: 'bi-heart-pulse-fill', route: '/admin/monitoring' },
   { label: 'Education Hub', icon: 'bi-mortarboard-fill', route: '/admin/education' },

@@ -21,8 +21,38 @@ import {
   WeeklyPlanData,
 } from '../../../core/models/session.model';
 import { Squad } from '../../../core/models/squad.model';
+import { ClubSettings, ClubsService, DEFAULT_COACH_PERMISSIONS } from '../../../core/services/clubs.service';
 import { CreatePlanPayload, SessionsService } from '../../../core/services/sessions.service';
 import { SquadsService } from '../../../core/services/squads.service';
+
+// ── Calendar helpers ──────────────────────────────────────────────────────────
+const CAL_DAY_NAMES   = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const CAL_MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function mondayOf(d: Date): Date {
+  const day  = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  const m    = new Date(d);
+  m.setDate(m.getDate() + diff);
+  m.setHours(0, 0, 0, 0);
+  return m;
+}
+
+function toIsoDate(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+function buildCalDays(monday: Date): { date: string; label: string; full: string }[] {
+  return CAL_DAY_NAMES.map((label, i) => {
+    const d = new Date(monday);
+    d.setDate(d.getDate() + i);
+    return {
+      date:  toIsoDate(d),
+      label,
+      full:  `${label} ${d.getDate()} ${CAL_MONTH_NAMES[d.getMonth()]}`,
+    };
+  });
+}
 
 type ListTab   = 'active' | 'archived';
 type DetailTab = 'overview' | 'content';
@@ -40,16 +70,19 @@ function clone<T>(v: T): T { return JSON.parse(JSON.stringify(v)); }
 export class Sessions implements OnInit {
   private sessionsService = inject(SessionsService);
   private squadsService   = inject(SquadsService);
+  private clubsService    = inject(ClubsService);
   private auth            = inject(AuthService);
 
   // ── Core state ─────────────────────────────────────────────────────────────
-  plans   = signal<SessionPlan[]>([]);
-  squads  = signal<Squad[]>([]);
-  loading = signal(true);
-  saving  = signal(false);
-  error   = signal<string | null>(null);
+  plans        = signal<SessionPlan[]>([]);
+  squads       = signal<Squad[]>([]);
+  clubSettings = signal<ClubSettings | null>(null);
+  loading      = signal(true);
+  saving       = signal(false);
+  error        = signal<string | null>(null);
 
   // ── UI state ───────────────────────────────────────────────────────────────
+  viewMode       = signal<'list' | 'calendar'>('list');
   currentView    = signal<AppView>('list');
   selectedPlanId = signal<string | null>(null);
   listSearch     = signal('');
@@ -57,6 +90,9 @@ export class Sessions implements OnInit {
   filterPhase    = signal<string>('all');
   listTab        = signal<ListTab>('active');
   detailTab      = signal<DetailTab>('overview');
+
+  // ── Calendar state ─────────────────────────────────────────────────────────
+  calWeekMonday = signal<Date>(mondayOf(new Date()));
 
   // ── Create form ────────────────────────────────────────────────────────────
   createTitle      = signal('');
@@ -156,6 +192,67 @@ export class Sessions implements OnInit {
   archivedTabCount = computed(() =>
     this.mySquadPlans().filter(p => p.status === 'archived').length);
 
+  // ── Permissions ────────────────────────────────────────────────────────────
+  isCoach = computed(() => this.auth.currentUser()?.role === 'coach');
+
+  allowedPlanTypes = computed(() => {
+    const settings = this.clubSettings();
+    if (!settings || !this.isCoach()) return this.planTypes;
+    const perms = settings.coachPermissions;
+    return this.planTypes.filter(t => {
+      switch (t.value) {
+        case 'single-session':   return perms.canCreateSingleSession;
+        case 'weekly-plan':      return perms.canCreateWeeklyPlan;
+        case 'multi-week-block': return perms.canCreateMultiWeekBlock;
+        case 'season-plan':      return perms.canCreateSeasonPlan;
+        default:                 return true;
+      }
+    });
+  });
+
+  canDeletePlan = computed(() => {
+    if (!this.isCoach()) return true;
+    return this.clubSettings()?.coachPermissions.canDeleteOwnPlans ?? DEFAULT_COACH_PERMISSIONS.canDeleteOwnPlans;
+  });
+
+  // ── Calendar computed ──────────────────────────────────────────────────────
+  calDays = computed(() => buildCalDays(this.calWeekMonday()));
+
+  calWeekLabel = computed(() => {
+    const ds = this.calDays();
+    return `${ds[0].full} — ${ds[6].full}`;
+  });
+
+  isCurrentCalWeek = computed(() =>
+    toIsoDate(mondayOf(new Date())) === toIsoDate(this.calWeekMonday()),
+  );
+
+  calPlansByDay = computed(() => {
+    const squad = this.mySquad();
+    const plans = this.plans()
+      .filter(p => squad ? p.squadId === squad.id : true)
+      .filter(p => p.status !== 'archived');
+
+    const weekStart   = toIsoDate(this.calWeekMonday());
+    const weekDates   = this.calDays().map(d => d.date);
+    const map         = new Map<string, SessionPlan[]>();
+    for (const d of weekDates) map.set(d, []);
+
+    for (const plan of plans) {
+      if (plan.type === 'single-session' && plan.data) {
+        const date = (plan.data as SingleSessionData).date;
+        if (weekDates.includes(date)) map.get(date)!.push(plan);
+      } else if (plan.type === 'weekly-plan') {
+        const planMonday = toIsoDate(mondayOf(new Date(plan.createdAt)));
+        if (planMonday === weekStart) map.get(weekStart)!.push(plan);
+      } else if (plan.type === 'multi-week-block' || plan.type === 'season-plan') {
+        const diff = (this.calWeekMonday().getTime() - new Date(plan.createdAt).getTime()) / 86_400_000;
+        if (diff >= 0 && diff <= 90) map.get(weekStart)!.push(plan);
+      }
+    }
+    return map;
+  });
+
   // ── Lifecycle ──────────────────────────────────────────────────────────────
   ngOnInit() {
     let squadsLoaded = false;
@@ -174,6 +271,11 @@ export class Sessions implements OnInit {
     this.sessionsService.getAll().subscribe({
       next: (plans) => { this.plans.set(plans); plansLoaded = true; tryAutoSelect(); },
       error: () => { this.error.set('Failed to load session plans.'); this.loading.set(false); },
+    });
+
+    this.clubsService.getSettings().subscribe({
+      next: (s) => this.clubSettings.set(s),
+      error: ()  => this.clubSettings.set({ coachPermissions: { ...DEFAULT_COACH_PERMISSIONS } }),
     });
   }
 
@@ -318,6 +420,25 @@ export class Sessions implements OnInit {
         if (this.selectedPlanId() === id) this.goBack();
       },
     });
+  }
+
+  // ── Calendar navigation ────────────────────────────────────────────────────
+  calPrevWeek() {
+    const d = new Date(this.calWeekMonday());
+    d.setDate(d.getDate() - 7);
+    this.calWeekMonday.set(d);
+  }
+
+  calNextWeek() {
+    const d = new Date(this.calWeekMonday());
+    d.setDate(d.getDate() + 7);
+    this.calWeekMonday.set(d);
+  }
+
+  calGoToday() { this.calWeekMonday.set(mondayOf(new Date())); }
+
+  calDayPlans(date: string): SessionPlan[] {
+    return this.calPlansByDay().get(date) ?? [];
   }
 
   // ── Edit: tags ─────────────────────────────────────────────────────────────

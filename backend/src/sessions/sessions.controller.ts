@@ -11,6 +11,9 @@ export class SessionsController {
 
   @Get()
   findAll(@Request() req: any) {
+    if (req.user.role === 'coach') {
+      return this.sessionsService.findForCoach(req.user.clubId, req.user.id);
+    }
     return this.sessionsService.findAll(req.user.clubId);
   }
 
@@ -21,12 +24,12 @@ export class SessionsController {
 
   @Post()
   create(@Body() dto: CreateSessionPlanDto, @Request() req: any) {
-    return this.sessionsService.create(dto, req.user.id, req.user.clubId);
+    return this.sessionsService.create(dto, req.user.id, req.user.clubId, req.user.role);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateSessionPlanDto, @Request() req: any) {
-    return this.sessionsService.update(id, dto, req.user.clubId);
+    return this.sessionsService.update(id, dto, req.user.clubId, req.user.id, req.user.role);
   }
 
   @Patch(':id/archive')
@@ -36,11 +39,11 @@ export class SessionsController {
 
   @Post(':id/duplicate')
   duplicate(@Param('id') id: string, @Request() req: any) {
-    return this.sessionsService.duplicate(id, req.user.id, req.user.clubId);
+    return this.sessionsService.duplicate(id, req.user.id, req.user.clubId, req.user.role);
   }
 
   @Delete(':id')
   delete(@Param('id') id: string, @Request() req: any) {
-    return this.sessionsService.delete(id, req.user.clubId);
+    return this.sessionsService.delete(id, req.user.clubId, req.user.id, req.user.role);
   }
 }

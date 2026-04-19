@@ -3,6 +3,7 @@
 export type PlanType = 'single-session' | 'weekly-plan' | 'multi-week-block' | 'season-plan';
 export type PlanStatus = 'active' | 'draft' | 'archived';
 export type CompetitionPhase = 'pre-season' | 'in-season' | 'post-season' | 'off-season';
+export type PlanVisibility = 'private' | 'squad' | 'club';
 
 // ── Single Session ─────────────────────────────────────────────────────────────
 
@@ -71,9 +72,11 @@ export interface SessionPlan {
   status: PlanStatus;
   competitionPhase: CompetitionPhase | null;
   squadId: string;
-  coachId: string;
+  coachId: string | null;
   clubId: string;
   tags: string[] | null;
+  visibility: PlanVisibility;
+  createdByRole: 'admin' | 'coach';
   data: SingleSessionData | WeeklyPlanData | MultiWeekBlockData | SeasonPlanData | null;
   createdAt: string;
   updatedAt: string;

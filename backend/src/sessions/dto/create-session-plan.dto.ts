@@ -1,5 +1,5 @@
 import { IsArray, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { CompetitionPhase, PlanStatus, PlanType } from '../entities/session-plan.entity';
+import { CompetitionPhase, PlanStatus, PlanType, PlanVisibility } from '../entities/session-plan.entity';
 
 export class CreateSessionPlanDto {
   @IsString()
@@ -23,6 +23,10 @@ export class CreateSessionPlanDto {
   @IsArray()
   @IsOptional()
   tags?: string[];
+
+  @IsEnum(PlanVisibility)
+  @IsOptional()
+  visibility?: PlanVisibility;
 
   @IsOptional()
   data?: any;

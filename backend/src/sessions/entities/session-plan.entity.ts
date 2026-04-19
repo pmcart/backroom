@@ -26,6 +26,12 @@ export enum CompetitionPhase {
   OffSeason  = 'off-season',
 }
 
+export enum PlanVisibility {
+  Private = 'private',
+  Squad   = 'squad',
+  Club    = 'club',
+}
+
 @Entity('session_plans')
 export class SessionPlan {
   @PrimaryGeneratedColumn('uuid')
@@ -46,11 +52,17 @@ export class SessionPlan {
   @Column()
   squadId: string;
 
-  @Column()
-  coachId: string;
+  @Column({ type: 'varchar', nullable: true })
+  coachId: string | null;
 
   @Column()
   clubId: string;
+
+  @Column({ type: 'enum', enum: PlanVisibility, default: PlanVisibility.Private })
+  visibility: PlanVisibility;
+
+  @Column({ default: 'coach' })
+  createdByRole: string;
 
   @Column({ type: 'jsonb', nullable: true })
   tags: string[] | null;

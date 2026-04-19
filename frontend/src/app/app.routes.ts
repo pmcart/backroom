@@ -39,6 +39,11 @@ export const routes: Routes = [
         data: { title: 'IDP Management' },
       },
       {
+        path: 'sessions',
+        loadComponent: () => import('./features/coach/sessions/sessions').then((m) => m.Sessions),
+        data: { title: 'Session Plans' },
+      },
+      {
         path: 'planning',
         loadComponent: () => import('./features/admin/planning/planning').then((m) => m.Planning),
         data: { title: 'Weekly Schedule' },

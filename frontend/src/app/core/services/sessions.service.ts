@@ -11,6 +11,7 @@ export interface CreatePlanPayload {
   competitionPhase?: string;
   squadId: string;
   tags?: string[];
+  visibility?: 'private' | 'squad' | 'club';
   data?: any;
 }
 

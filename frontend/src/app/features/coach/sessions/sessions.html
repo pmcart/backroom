@@ -18,11 +18,18 @@
       <h1 class="sp-page-title">Session Planning</h1>
       <p class="sp-page-subtitle">Periodisation, organisation, and long-term planning aligned with the club's methodology</p>
     </div>
-    <button class="sp-btn sp-btn-primary" (click)="openCreate()">
-      <span class="sp-btn-icon">+</span> Create New Plan
-    </button>
+    <div class="sp-header-actions">
+      <div class="sp-view-toggle">
+        <button class="sp-toggle-btn" [class.sp-toggle-active]="viewMode() === 'list'" (click)="viewMode.set('list')">List</button>
+        <button class="sp-toggle-btn" [class.sp-toggle-active]="viewMode() === 'calendar'" (click)="viewMode.set('calendar')">Calendar</button>
+      </div>
+      <button class="sp-btn sp-btn-primary" (click)="openCreate()">
+        <span class="sp-btn-icon">+</span> Create New Plan
+      </button>
+    </div>
   </div>
 
+  @if (viewMode() === 'list') {
   <!-- Info Banner -->
   <div class="sp-info-banner">
     <div class="sp-info-banner-icon">📋</div>
@@ -122,13 +129,18 @@
           <div class="sp-plan-badges">
             <span class="sp-type-badge sp-type-{{ plan.type }}">{{ typeLabel(plan.type) }}</span>
             <span class="sp-status-badge sp-status-{{ plan.status }}">{{ plan.status }}</span>
+            @if (plan.createdByRole === 'admin') {
+              <span class="sp-badge-admin-tag">Admin</span>
+            }
           </div>
           <div class="sp-plan-actions" (click)="$event.stopPropagation()">
             <button class="sp-icon-btn" title="Duplicate" (click)="duplicatePlan(plan.id)">⧉</button>
             @if (plan.status !== 'archived') {
               <button class="sp-icon-btn" title="Archive" (click)="archivePlan(plan.id)">⬇</button>
             }
-            <button class="sp-icon-btn sp-icon-btn-danger" title="Delete" (click)="deletePlan(plan.id)">🗑</button>
+            @if (canDeletePlan()) {
+              <button class="sp-icon-btn sp-icon-btn-danger" title="Delete" (click)="deletePlan(plan.id)">🗑</button>
+            }
           </div>
         </div>
         <div class="sp-plan-title">{{ plan.title }}</div>
@@ -142,6 +154,49 @@
       </div>
     }
   </div>
+  }<!-- end viewMode list -->
+
+  @if (viewMode() === 'calendar') {
+  <!-- Calendar Header -->
+  <div class="sp-cal-header">
+    <div class="sp-cal-nav">
+      @if (!isCurrentCalWeek()) {
+        <button class="sp-btn sp-btn-outline sp-btn-sm" (click)="calGoToday()">Today</button>
+      }
+      <div class="sp-btn-group">
+        <button class="sp-icon-btn" (click)="calPrevWeek()">‹</button>
+        <button class="sp-icon-btn" (click)="calNextWeek()">›</button>
+      </div>
+      <span class="sp-cal-week-label">{{ calWeekLabel() }}</span>
+    </div>
+  </div>
+
+  <!-- Calendar Grid -->
+  <div class="sp-cal-grid">
+    @for (day of calDays(); track day.date) {
+      <div class="sp-cal-day-col">
+        <div class="sp-cal-day-header">
+          <span class="sp-cal-day-name">{{ day.label }}</span>
+          <span class="sp-cal-day-date">{{ day.full.slice(4) }}</span>
+        </div>
+        <div class="sp-cal-day-body">
+          @for (plan of calDayPlans(day.date); track plan.id) {
+            <div class="sp-cal-chip sp-type-chip-{{ plan.type }}" (click)="selectPlan(plan.id)">
+              <div class="sp-cal-chip-title">{{ plan.title }}</div>
+              <div class="sp-cal-chip-meta">
+                <span class="sp-cal-chip-type">{{ typeLabel(plan.type) }}</span>
+                @if (plan.type === 'weekly-plan') { <span class="sp-cal-span">7d</span> }
+                @if (plan.type === 'multi-week-block') { <span class="sp-cal-span">block</span> }
+                @if (plan.type === 'season-plan') { <span class="sp-cal-span">season</span> }
+                @if (plan.createdByRole === 'admin') { <span class="sp-badge-admin-tag">Admin</span> }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+  }<!-- end viewMode calendar -->
 
 </div>
 }<!-- end list view -->
@@ -166,15 +221,21 @@
       <div class="sp-form-grid-4">
         <div class="sp-field">
           <label class="sp-label">Plan Type</label>
+          @if (allowedPlanTypes().length === 0) {
+            <div class="sp-info-banner sp-info-banner-warn">
+              <div class="sp-info-banner-text">Your club administrator has not granted permission to create any plan types.</div>
+            </div>
+          } @else {
           <select
             class="sp-select-full"
             [ngModel]="createType()"
             (ngModelChange)="onCreateTypeChange($event)"
           >
-            @for (t of planTypes; track t.value) {
+            @for (t of allowedPlanTypes(); track t.value) {
               <option [value]="t.value">{{ t.label }}</option>
             }
           </select>
+          }
         </div>
         <div class="sp-field">
           <label class="sp-label">Status</label>
@@ -486,7 +547,9 @@
         @if (selectedPlan()!.status !== 'archived') {
           <button class="sp-icon-btn" title="Archive" (click)="archivePlan(selectedPlan()!.id)">⬇ Archive</button>
         }
-        <button class="sp-icon-btn sp-icon-btn-danger" (click)="deletePlan(selectedPlan()!.id)">🗑 Delete</button>
+        @if (canDeletePlan()) {
+          <button class="sp-icon-btn sp-icon-btn-danger" (click)="deletePlan(selectedPlan()!.id)">🗑 Delete</button>
+        }
         @if (editDirty()) {
           <button class="sp-btn sp-btn-primary sp-btn-sm" [disabled]="saving()" (click)="savePlan()">
             {{ saving() ? 'Saving…' : 'Save Changes' }}
@@ -507,6 +570,9 @@
     <div class="sp-detail-meta-row">
       <span class="sp-type-badge sp-type-{{ selectedPlan()!.type }}">{{ typeLabel(selectedPlan()!.type) }}</span>
       <span class="sp-status-badge sp-status-{{ selectedPlan()!.status }}">{{ selectedPlan()!.status }}</span>
+      @if (selectedPlan()!.createdByRole === 'admin') {
+        <span class="sp-badge-admin-tag">Created by Admin</span>
+      }
       @if (selectedPlan()!.competitionPhase) {
         <span class="sp-meta-text">{{ phaseLabel(selectedPlan()!.competitionPhase!) }}</span>
       }
