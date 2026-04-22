@@ -1,9 +1,14 @@
 .accordion-toggle {
   &:hover {
-    background-color: rgba(0, 0, 0, 0.03);
+    background-color: rgba(255, 255, 255, 0.04);
   }
   &:focus {
     box-shadow: none;
+  }
+  &:active,
+  &:focus:active {
+    color: var(--bs-body-color) !important;
+    background-color: rgba(255, 255, 255, 0.06);
   }
 }
 

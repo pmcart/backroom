@@ -110,8 +110,8 @@
 
   <!-- ═══ Tab: By Squad ════════════════════════════════════════════════════ -->
   @if (activeTab() === 'by-squad') {
-    @if (filtered().length === 0) {
-      <div class="text-center py-5 text-muted">No IDPs match your current filters.</div>
+    @if (bySquad().length === 0) {
+      <div class="text-center py-5 text-muted">No squads found.</div>
     } @else {
       @for (group of bySquad(); track group.squad.id) {
         <div class="card shadow-sm mb-4">
@@ -122,13 +122,15 @@
             </div>
             <span class="badge bg-secondary">{{ group.idps.length }} IDPs</span>
           </div>
+          @if (group.idps.length === 0) {
+            <div class="p-4 text-center text-muted small">No IDPs created for this squad yet.</div>
+          } @else {
           <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
               <thead class="table-light">
                 <tr>
                   <th>Player</th>
                   <th>Position</th>
-                  <th>Mode</th>
                   <th>Status</th>
                   <th>Review Date</th>
                   <th>Goals</th>
@@ -141,11 +143,6 @@
                   <tr>
                     <td class="fw-semibold">{{ idp.player?.firstName }} {{ idp.player?.lastName }}</td>
                     <td class="text-muted small">{{ idp.player?.position || '—' }}</td>
-                    <td>
-                      <span class="badge" [class]="idp.mode === 'elite' ? 'bg-primary' : 'bg-secondary'">
-                        {{ idp.mode === 'elite' ? 'Elite' : 'Standard' }}
-                      </span>
-                    </td>
                     <td>
                       <span class="badge {{ statusBadgeClass(idp.status) }}">{{ statusLabel(idp.status) }}</span>
                     </td>
@@ -173,6 +170,7 @@
               </tbody>
             </table>
           </div>
+          }
         </div>
       }
     }

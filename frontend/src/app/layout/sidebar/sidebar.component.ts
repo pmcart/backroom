@@ -121,8 +121,6 @@ const COACH_NAV: NavItem[] = [
   { label: 'My Squad', icon: 'bi-people-fill', route: '/coach/squad' },
   { label: 'Session Plans', icon: 'bi-clipboard2-fill', route: '/coach/sessions' },
   { label: 'IDP', icon: 'bi-person-lines-fill', route: '/coach/idp' },
-  { label: 'Wellness', icon: 'bi-heart-pulse-fill', route: '/coach/wellness' },
-  { label: 'Education', icon: 'bi-mortarboard-fill', route: '/coach/education' },
   { label: 'Club Methodology', icon: 'bi-book-half', route: '/coach/methodology' },
 ];
 

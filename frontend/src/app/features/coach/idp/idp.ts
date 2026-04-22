@@ -36,7 +36,7 @@ export class Idp implements OnInit {
   // ── Create IDP form ───────────────────────────────────────────────────────
   createView              = signal(false);
   createPlayerId          = signal('');
-  createMode              = signal<IdpMode>('standard');
+  createMode              = signal<IdpMode>('elite');
   createAgeGroup          = signal('');
   createReviewDate        = signal('');
   createStartDate         = signal('');
@@ -230,7 +230,7 @@ export class Idp implements OnInit {
   // ── Create IDP ────────────────────────────────────────────────────────────
   openCreateForm() {
     this.createPlayerId.set('');
-    this.createMode.set('standard');
+    this.createMode.set('elite');
     this.createAgeGroup.set(this.selectedSquad()?.ageGroup ?? '');
     this.createReviewDate.set('');
     this.createStartDate.set('');

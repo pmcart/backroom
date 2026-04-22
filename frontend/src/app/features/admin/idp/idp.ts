@@ -2,6 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Idp as IdpModel } from '../../../core/models/idp.model';
 import { IdpService } from '../../../core/services/idp.service';
+import { SquadsService } from '../../../core/services/squads.service';
 
 @Component({
   selector: 'app-idp',
@@ -12,8 +13,10 @@ import { IdpService } from '../../../core/services/idp.service';
 })
 export class Idp implements OnInit {
   private idpService = inject(IdpService);
+  private squadsService = inject(SquadsService);
 
   idps = signal<IdpModel[]>([]);
+  allSquads = signal<{ id: string; name: string; ageGroup: string }[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
   activeTab = signal<'by-squad' | 'engagement'>('by-squad');
@@ -25,9 +28,25 @@ export class Idp implements OnInit {
   detailTab  = signal<'overview' | 'goals' | 'notes' | 'elite'>('overview');
 
   ngOnInit() {
+    let idpsLoaded = false;
+    let squadsLoaded = false;
+
+    const done = () => {
+      if (idpsLoaded && squadsLoaded) this.loading.set(false);
+    };
+
     this.idpService.getAll().subscribe({
-      next: (data) => { this.idps.set(data); this.loading.set(false); },
+      next: (data) => { this.idps.set(data); idpsLoaded = true; done(); },
       error: () => { this.error.set('Failed to load IDPs.'); this.loading.set(false); },
+    });
+
+    this.squadsService.getSquads().subscribe({
+      next: (squads) => {
+        this.allSquads.set(squads.map(s => ({ id: s.id, name: s.name, ageGroup: s.ageGroup })));
+        squadsLoaded = true;
+        done();
+      },
+      error: () => { squadsLoaded = true; done(); }, // non-fatal: degrade gracefully
     });
   }
 
@@ -43,17 +62,20 @@ export class Idp implements OnInit {
   });
 
   squads = computed(() => {
-    const seen = new Map<string, { id: string; name: string }>();
-    for (const idp of this.idps()) {
-      if (idp.squad && !seen.has(idp.squadId)) {
-        seen.set(idp.squadId, { id: idp.squadId, name: idp.squad.name });
-      }
-    }
-    return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
+    return this.allSquads().sort((a, b) => a.name.localeCompare(b.name));
   });
 
   bySquad = computed(() => {
+    // Start with all known squads so newly-created squads (with no IDPs yet) still appear
     const groups = new Map<string, { squad: { id: string; name: string; ageGroup: string }; idps: IdpModel[] }>();
+
+    const squadFilter = this.squadFilter();
+    for (const s of this.allSquads()) {
+      if (!squadFilter || squadFilter === s.id) {
+        groups.set(s.id, { squad: s, idps: [] });
+      }
+    }
+
     for (const idp of this.filtered()) {
       if (!idp.squad) continue;
       if (!groups.has(idp.squadId)) {

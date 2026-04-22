@@ -19,35 +19,6 @@
 
   <div class="icp-body">
 
-    <!-- IDP Type Selection -->
-    <div class="icp-section">
-      <div class="icp-section-title">IDP Type</div>
-      <div class="icp-type-grid">
-        <div
-          class="icp-type-card"
-          [class.icp-type-selected-standard]="createMode() === 'standard'"
-          (click)="createMode.set('standard')"
-        >
-          <div class="icp-type-icon">🎯</div>
-          <div>
-            <div class="icp-type-name">Standard IDP</div>
-            <div class="icp-type-desc">Development goals, coach comments, progress notes and player reflections.</div>
-          </div>
-        </div>
-        <div
-          class="icp-type-card"
-          [class.icp-type-selected-elite]="createMode() === 'elite'"
-          (click)="createMode.set('elite')"
-        >
-          <div class="icp-type-icon">🏆</div>
-          <div>
-            <div class="icp-type-name">Elite IDP</div>
-            <div class="icp-type-desc">Full living document: holistic evaluation, positional profile, performance support, off-field development.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Player Info -->
     <div class="icp-section">
       <div class="icp-section-title">Player Details</div>
@@ -116,9 +87,7 @@
                   <div class="icp-preview-name">{{ p.firstName }} {{ p.lastName }}</div>
                   <div class="icp-preview-sub">{{ p.position || '—' }} · {{ createAgeGroup() || selectedSquad()?.ageGroup || '—' }}</div>
                 </div>
-                <span class="icp-mode-badge" [class.icp-mode-elite]="createMode() === 'elite'">
-                  {{ createMode() === 'elite' ? 'Elite IDP' : 'Standard IDP' }}
-                </span>
+                <span class="icp-mode-badge icp-mode-elite">Elite IDP</span>
               }
             }
           </div>
@@ -189,9 +158,7 @@
                 <span class="idp-list-sub">{{ idp.player?.position || '—' }}</span>
               </div>
               <div class="idp-list-right">
-                <span class="icp-mode-badge-sm" [class.icp-mode-elite]="idp.mode === 'elite'">
-                  {{ idp.mode === 'elite' ? 'Elite' : 'Standard' }}
-                </span>
+                <span class="icp-mode-badge-sm icp-mode-elite">Elite</span>
                 <button
                   class="idp-delete-btn"
                   title="Delete IDP"
@@ -241,8 +208,8 @@
                 {{ selectedIdp()!.player?.firstName }} {{ selectedIdp()!.player?.lastName }}
               </div>
               <div class="dh-player-meta">
-                <span class="icp-mode-badge" [class.icp-mode-elite]="selectedIdp()!.mode === 'elite'">
-                  {{ selectedIdp()!.mode === 'elite' ? 'Elite IDP' : 'Standard IDP' }}
+                <span class="icp-mode-badge icp-mode-elite">
+                  Elite IDP
                 </span>
                 <span class="dh-meta-text">{{ selectedIdp()!.player?.position || '—' }}</span>
                 @if (selectedIdp()!.ageGroup) {
@@ -395,8 +362,8 @@
               <div class="idp-info-value">{{ formatDate(selectedIdp()!.reviewDate) }}</div>
             </div>
             <div class="idp-info-box">
-              <div class="idp-info-label">IDP Mode</div>
-              <div class="idp-info-value" style="text-transform:capitalize">{{ selectedIdp()!.mode }}</div>
+              <div class="idp-info-label">IDP Type</div>
+              <div class="idp-info-value">Elite</div>
             </div>
             <div class="idp-info-box">
               <div class="idp-info-label">Status</div>
