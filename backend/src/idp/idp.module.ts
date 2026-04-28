@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Player } from '../players/entities/player.entity';
 import { IdpGoal } from './entities/idp-goal.entity';
 import { IdpProgressNote } from './entities/idp-progress-note.entity';
 import { Idp } from './entities/idp.entity';
@@ -9,7 +10,7 @@ import { IdpPdfService } from './idp-pdf.service';
 import { IdpService } from './idp.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Idp, IdpGoal, IdpProgressNote])],
+  imports: [TypeOrmModule.forFeature([Idp, IdpGoal, IdpProgressNote, Player])],
   controllers: [IdpController],
   providers: [IdpService, IdpPdfService, IdpEmailService],
   exports: [IdpService],

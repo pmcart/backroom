@@ -17,6 +17,8 @@ import { MethodologyConfig } from './methodology/entities/methodology.entity';
 import { MethodologyModule } from './methodology/methodology.module';
 import { ScheduleEntry } from './schedule/entities/schedule-entry.entity';
 import { ScheduleModule } from './schedule/schedule.module';
+import { WellnessCheckin } from './wellness/entities/wellness-checkin.entity';
+import { WellnessModule } from './wellness/wellness.module';
 import { SessionPlan } from './sessions/entities/session-plan.entity';
 import { SessionsModule } from './sessions/sessions.module';
 import { CoachAssignment } from './squads/entities/coach-assignment.entity';
@@ -40,7 +42,7 @@ import { UsersModule } from './users/users.module';
             type: 'postgres',
             url: databaseUrl,
             ssl: { rejectUnauthorized: false },
-            entities: [User, Club, Squad, Player, CoachAssignment, Idp, IdpGoal, IdpProgressNote, SessionPlan, ScheduleEntry, MethodologyConfig],
+            entities: [User, Club, Squad, Player, CoachAssignment, Idp, IdpGoal, IdpProgressNote, SessionPlan, ScheduleEntry, MethodologyConfig, WellnessCheckin],
             synchronize: true,
             logging: false,
           };
@@ -52,7 +54,7 @@ import { UsersModule } from './users/users.module';
           username: config.get<string>('DB_USER', 'postgres'),
           password: config.get<string>('DB_PASS', 'postgres'),
           database: config.get<string>('DB_NAME', 'backroom'),
-          entities: [User, Club, Squad, Player, CoachAssignment, Idp, IdpGoal, IdpProgressNote, SessionPlan, ScheduleEntry, MethodologyConfig],
+          entities: [User, Club, Squad, Player, CoachAssignment, Idp, IdpGoal, IdpProgressNote, SessionPlan, ScheduleEntry, MethodologyConfig, WellnessCheckin],
           synchronize: true,
           logging: false,
         };
@@ -67,6 +69,7 @@ import { UsersModule } from './users/users.module';
     SessionsModule,
     ScheduleModule,
     MethodologyModule,
+    WellnessModule,
   ],
 })
 export class AppModule {}

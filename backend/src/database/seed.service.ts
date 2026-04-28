@@ -196,6 +196,19 @@ export class SeedService implements OnApplicationBootstrap {
       );
     }
 
+    // Link player User accounts to their Player entity records
+    const playerUsers = await this.users.find({ where: { role: Role.Player } });
+    const allPlayerEntities = await this.players.find();
+    for (const playerEntity of allPlayerEntities) {
+      const matchingUser = playerUsers.find(
+        (u) => u.firstName === playerEntity.firstName && u.lastName === playerEntity.lastName && u.clubId === playerEntity.clubId,
+      );
+      if (matchingUser) {
+        playerEntity.userId = matchingUser.id;
+        await this.players.save(playerEntity);
+      }
+    }
+
     await this.seedIdps();
     await this.seedSessionPlans();
     await this.seedSchedule();

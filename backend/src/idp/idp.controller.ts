@@ -30,6 +30,11 @@ export class IdpController {
     return this.idpService.findAll(req.user.clubId);
   }
 
+  @Get('mine')
+  findMine(@Request() req: any) {
+    return this.idpService.findMine(req.user.id, req.user.clubId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string, @Request() req: any) {
     return this.idpService.findOne(id, req.user.clubId);

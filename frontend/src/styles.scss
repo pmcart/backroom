@@ -318,6 +318,113 @@
   }
 }
 
+// ─── Mobile layout ───────────────────────────────────────────────────────────
+@media (max-width: 767.98px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 1050;
+
+    &.sidebar-mobile-open {
+      transform: translateX(0);
+      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  .main-wrapper {
+    margin-left: 0 !important;
+  }
+
+  .page-content {
+    padding: 1rem;
+  }
+
+  .player-layout .page-content {
+    padding-bottom: 80px;
+  }
+
+  .nav-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+  }
+}
+
+// ─── Sidebar overlay (mobile) ─────────────────────────────────────────────────
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 1049;
+
+  &.show {
+    display: block;
+  }
+}
+
+// ─── Mobile hamburger button ──────────────────────────────────────────────────
+.mobile-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--muted-foreground);
+  padding: 6px 8px;
+  margin-right: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--foreground);
+  }
+
+  @media (max-width: 767.98px) {
+    display: flex;
+  }
+}
+
+// ─── Player bottom navigation (mobile only) ───────────────────────────────────
+.player-bottom-nav {
+  display: none;
+
+  @media (max-width: 767.98px) {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: var(--sidebar-bg);
+    border-top: 1px solid var(--sidebar-border);
+    z-index: 1000;
+
+    a {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      color: var(--sidebar-muted);
+      text-decoration: none;
+      font-size: 0.65rem;
+      font-weight: 500;
+      transition: color 0.15s;
+
+      i { font-size: 1.25rem; }
+
+      &.active { color: var(--accent); }
+      &:hover  { color: var(--foreground); }
+    }
+  }
+}
+
 // ─── Auth pages ──────────────────────────────────────────────────────────────
 .auth-wrapper {
   min-height: 100vh;

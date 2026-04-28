@@ -58,6 +58,10 @@ export class IdpService {
     return this.http.get<Idp>(`${this.base}/${id}`);
   }
 
+  getMine(): Observable<Idp | null> {
+    return this.http.get<Idp | null>(`${this.base}/mine`);
+  }
+
   create(payload: CreateIdpPayload): Observable<Idp> {
     return this.http.post<Idp>(this.base, payload);
   }

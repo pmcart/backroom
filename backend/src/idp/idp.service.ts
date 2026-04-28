@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { Player } from '../players/entities/player.entity';
 import { AddProgressNoteDto } from './dto/add-progress-note.dto';
 import { CreateGoalDto } from './dto/create-goal.dto';
 import { CreateIdpDto } from './dto/create-idp.dto';
@@ -19,6 +20,7 @@ export class IdpService {
     @InjectRepository(Idp) private idpRepo: Repository<Idp>,
     @InjectRepository(IdpGoal) private goalRepo: Repository<IdpGoal>,
     @InjectRepository(IdpProgressNote) private noteRepo: Repository<IdpProgressNote>,
+    @InjectRepository(Player) private playerRepo: Repository<Player>,
   ) {}
 
   // ── Read ──────────────────────────────────────────────────────────────────
@@ -38,6 +40,17 @@ export class IdpService {
       relations: ['player', 'squad', 'goals', 'notes'],
     });
     if (!idp) throw new NotFoundException('IDP not found');
+    return this.shape(idp);
+  }
+
+  async findMine(userId: string, clubId: string): Promise<any | null> {
+    const player = await this.playerRepo.findOne({ where: { userId, clubId } });
+    if (!player) return null;
+    const idp = await this.idpRepo.findOne({
+      where: { playerId: player.id, clubId },
+      relations: ['player', 'squad', 'goals', 'notes'],
+    });
+    if (!idp) return null;
     return this.shape(idp);
   }
 

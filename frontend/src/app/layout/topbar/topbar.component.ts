@@ -4,6 +4,7 @@ import { filter, map, startWith } from 'rxjs';
 import { AsyncPipe, DatePipe, UpperCasePipe } from '@angular/common';
 import { AuthService } from '../../core/auth/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { MobileMenuService } from '../../core/services/mobile-menu.service';
 
 interface DemoUser {
   name: string;
@@ -39,6 +40,15 @@ const CLUBS = ['Shelbourne FC', 'Cork City FC'];
   imports: [AsyncPipe, UpperCasePipe, DatePipe, RouterLink],
   template: `
     <header class="topbar">
+      @if (authService.role !== 'player') {
+        <button class="mobile-menu-btn" (click)="mobileMenu.toggle()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="6"  x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+      }
       <span class="topbar-title">{{ pageTitle$ | async }}</span>
 
       <div class="ms-auto d-flex align-items-center gap-3">
@@ -330,6 +340,7 @@ export class TopbarComponent {
   private activatedRoute = inject(ActivatedRoute);
   authService   = inject(AuthService);
   notifications = inject(NotificationService);
+  mobileMenu    = inject(MobileMenuService);
 
   open      = signal(false);
   notifOpen = signal(false);

@@ -1,6 +1,8 @@
 import { Component, computed, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { filter } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
+import { MobileMenuService } from '../../core/services/mobile-menu.service';
 
 interface NavItem {
   label: string;
@@ -13,7 +15,7 @@ interface NavItem {
   standalone: true,
   imports: [RouterLink, RouterLinkActive],
   template: `
-    <nav class="sidebar d-flex flex-column">
+    <nav class="sidebar d-flex flex-column" [class.sidebar-mobile-open]="menu.isOpen()">
       <div class="sidebar-brand">
         @if (clubName()) {
           <div class="club-logo-badge" [style.background]="clubColor()">{{ clubInitials() }}</div>
@@ -60,6 +62,13 @@ interface NavItem {
 })
 export class SidebarComponent {
   auth = inject(AuthService);
+  menu = inject(MobileMenuService);
+
+  constructor() {
+    inject(Router).events
+      .pipe(filter((e) => e instanceof NavigationEnd))
+      .subscribe(() => this.menu.close());
+  }
 
   clubName = computed(() => this.auth.currentUser()?.clubName ?? null);
 
