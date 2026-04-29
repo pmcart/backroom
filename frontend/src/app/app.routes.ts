@@ -148,5 +148,12 @@ export const routes: Routes = [
     ],
   },
 
+  // ─── Hidden: Organisation provisioning (no nav link, key-protected) ──────
+  {
+    path: 'provision',
+    loadComponent: () =>
+      import('./features/provision/provision.component').then((m) => m.ProvisionComponent),
+  },
+
   { path: '**', redirectTo: 'login' },
 ];

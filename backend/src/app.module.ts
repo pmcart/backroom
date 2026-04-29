@@ -26,6 +26,7 @@ import { Squad } from './squads/entities/squad.entity';
 import { SquadsModule } from './squads/squads.module';
 import { User } from './users/entities/user.entity';
 import { UsersModule } from './users/users.module';
+import { ProvisionModule } from './provision/provision.module';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { UsersModule } from './users/users.module';
     ScheduleModule,
     MethodologyModule,
     WellnessModule,
+    ProvisionModule,
   ],
 })
 export class AppModule {}
