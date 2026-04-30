@@ -26,16 +26,21 @@ export class ProvisionService {
       throw new UnauthorizedException('Invalid provision key');
     }
 
+    const slug = dto.organization.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+
     const exists = await this.clubRepo.findOne({
-      where: [{ name: dto.organization.name }, { slug: dto.organization.slug }],
+      where: [{ name: dto.organization.name }, { slug }],
     });
     if (exists) {
-      throw new ConflictException('An organisation with that name or slug already exists');
+      throw new ConflictException('An organisation with that name already exists');
     }
 
     const club = this.clubRepo.create({
       name: dto.organization.name,
-      slug: dto.organization.slug,
+      slug,
       isActive: true,
       settings: DEFAULT_CLUB_SETTINGS,
     });

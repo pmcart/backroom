@@ -141,12 +141,12 @@ interface ProvisionResult {
         <!-- ── Step: Success ──────────────────────────────────────── -->
         @if (step() === 'success' && result()) {
           <div class="pcard-body">
-            <div class="success-icon">✓</div>
-            <h2 class="success-title">Organisation Created</h2>
-
-            <div class="result-org">
-              <div class="result-org-name">{{ result()!.club.name }}</div>
-              <div class="result-org-slug">{{ result()!.club.slug }}</div>
+            <div class="success-banner">
+              <div class="success-icon">✓</div>
+              <div>
+                <div class="success-title">Organisation Created</div>
+                <div class="success-sub">{{ result()!.club.name }} is ready to use</div>
+              </div>
             </div>
 
             <div class="warning-box">
@@ -154,8 +154,8 @@ interface ProvisionResult {
               Temporary passwords are shown once and cannot be retrieved again.
             </div>
 
-            @for (admin of result()!.admins; track admin.id) {
-              <div class="cred-card">
+            @for (admin of result()!.admins; track admin.id; let first = $first) {
+              <div class="cred-card" [class.cred-card-first]="first">
                 <div class="cred-card-header">
                   <span class="cred-name">{{ admin.firstName }} {{ admin.lastName }}</span>
                   @if (admin.emailSent) {
@@ -390,37 +390,41 @@ interface ProvisionResult {
       border-top: 1px solid #334155;
     }
     /* Success */
+    .success-banner {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(16,185,129,0.1);
+      border: 1px solid #10b981;
+      border-radius: 10px;
+      padding: 16px 18px;
+      margin-bottom: 16px;
+    }
     .success-icon {
-      width: 52px;
-      height: 52px;
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
       background: #10b981;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
+      font-size: 20px;
       color: white;
-      margin: 0 auto 12px;
     }
     .success-title {
-      font-size: 20px;
-      font-weight: 700;
-      color: #f1f5f9;
-      text-align: center;
-      margin: 0 0 20px;
-    }
-    .result-org {
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 10px;
-      padding: 14px 18px;
-      margin-bottom: 16px;
-      text-align: center;
-    }
-    .result-org-name {
       font-size: 16px;
       font-weight: 700;
-      color: #f1f5f9;
+      color: #10b981;
+      margin: 0 0 2px;
+    }
+    .success-sub {
+      font-size: 13px;
+      color: #94a3b8;
+    }
+    .cred-card-first {
+      border-color: #4f46e5 !important;
+      box-shadow: 0 0 0 1px #4f46e5;
     }
     .result-org-slug {
       font-size: 12px;
@@ -540,20 +544,8 @@ export class ProvisionComponent {
 
   orgForm = this.fb.nonNullable.group({
     name: ['', Validators.required],
-    slug: ['', [Validators.required, Validators.minLength(2)]],
     admins: this.fb.array([this.newAdminGroup()]),
   });
-
-  constructor() {
-    // Auto-generate slug from name
-    this.orgForm.get('name')!.valueChanges.subscribe(val => {
-      const slug = val
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '');
-      this.orgForm.get('slug')!.setValue(slug, { emitEvent: false });
-    });
-  }
 
   get adminsArray(): FormArray {
     return this.orgForm.get('admins') as FormArray;
@@ -591,11 +583,11 @@ export class ProvisionComponent {
     this.loading.set(true);
     this.formError.set(null);
 
-    const { name, slug, admins } = this.orgForm.getRawValue();
+    const { name, admins } = this.orgForm.getRawValue();
 
     this.http.post<ProvisionResult>('/api/provision', {
       provisionKey: this.storedKey,
-      organization: { name, slug },
+      organization: { name },
       admins,
     }).subscribe({
       next: (res) => {

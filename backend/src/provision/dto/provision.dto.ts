@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsEmail, IsNotEmpty, IsString, MinLength, ValidateNested } from 'class-validator';
+import { ArrayMinSize, IsArray, IsEmail, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
 
 export class AdminInputDto {
   @IsString() @IsNotEmpty() firstName: string;
@@ -9,7 +9,6 @@ export class AdminInputDto {
 
 export class OrgInputDto {
   @IsString() @IsNotEmpty() name: string;
-  @IsString() @IsNotEmpty() @MinLength(2) slug: string;
 }
 
 export class ProvisionDto {
