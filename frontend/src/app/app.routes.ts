@@ -48,16 +48,7 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/planning/planning').then((m) => m.Planning),
         data: { title: 'Weekly Schedule' },
       },
-      {
-        path: 'monitoring',
-        loadComponent: () => import('./features/admin/monitoring/monitoring').then((m) => m.Monitoring),
-        data: { title: 'Monitoring' },
-      },
-      {
-        path: 'education',
-        loadComponent: () => import('./features/admin/education/education').then((m) => m.Education),
-        data: { title: 'Education Hub' },
-      },
+
       {
         path: 'settings',
         loadComponent: () => import('./features/admin/settings/settings').then((m) => m.Settings),

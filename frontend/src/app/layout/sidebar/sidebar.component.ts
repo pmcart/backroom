@@ -119,8 +119,7 @@ const ADMIN_NAV: NavItem[] = [
   { label: 'IDP Management', icon: 'bi-person-lines-fill', route: '/admin/idp' },
   { label: 'Session Plans', icon: 'bi-clipboard2-fill', route: '/admin/sessions' },
   { label: 'Weekly Schedule', icon: 'bi-calendar3', route: '/admin/planning' },
-  { label: 'Monitoring', icon: 'bi-heart-pulse-fill', route: '/admin/monitoring' },
-  { label: 'Education Hub', icon: 'bi-mortarboard-fill', route: '/admin/education' },
+
   { label: 'Club Methodology', icon: 'bi-book-half', route: '/admin/methodology' },
   { label: 'Settings', icon: 'bi-gear-fill', route: '/admin/settings' },
 ];

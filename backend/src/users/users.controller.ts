@@ -12,8 +12,8 @@ export class UsersController {
 
   @Get()
   @Roles(Role.Admin)
-  findAll(@Query('clubId') clubId?: string) {
-    return this.usersService.findAll(clubId);
+  findAll(@Request() req: any) {
+    return this.usersService.findAll(req.user.clubId);
   }
 
   @Get('me')
