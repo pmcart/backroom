@@ -13,14 +13,22 @@ export class ProvisionEmailService {
     orgName: string,
     temporaryPassword: string,
   ): Promise<void> {
+    const smtpUser = this.config.get<string>('SMTP_USER', '');
+    const smtpPass = this.config.get<string>('SMTP_PASS', '');
+
+    if (!smtpUser || !smtpPass) {
+      this.logger.warn(`SMTP not configured — skipping welcome email to ${admin.email}`);
+      throw new Error('SMTP not configured');
+    }
+
     const transporter = nodemailer.createTransport({
       host: this.config.get<string>('SMTP_HOST', 'smtp.gmail.com'),
       port: this.config.get<number>('SMTP_PORT', 587),
       secure: false,
-      auth: {
-        user: this.config.get<string>('SMTP_USER', ''),
-        pass: this.config.get<string>('SMTP_PASS', ''),
-      },
+      auth: { user: smtpUser, pass: smtpPass },
+      connectionTimeout: 5000,
+      greetingTimeout: 5000,
+      socketTimeout: 10000,
     });
 
     const appUrl = this.config.get<string>('APP_URL', 'https://backroom.app');
