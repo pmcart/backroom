@@ -17,7 +17,13 @@ interface NavItem {
   template: `
     <nav class="sidebar d-flex flex-column" [class.sidebar-mobile-open]="menu.isOpen()">
       <div class="sidebar-brand">
-        @if (clubName()) {
+        @if (auth.isSuperadmin()) {
+          <div class="club-logo-badge" style="background:#1e293b; font-size:0.7rem;">SA</div>
+          <div class="club-brand-text">
+            <div class="club-brand-name">Backroom</div>
+            <div class="club-brand-sub">Super Admin</div>
+          </div>
+        } @else if (clubName()) {
           <div class="club-logo-badge" [style.background]="clubColor()">{{ clubInitials() }}</div>
           <div class="club-brand-text">
             <div class="club-brand-name">{{ clubName() }}</div>
@@ -45,6 +51,11 @@ interface NavItem {
       </div>
 
       <div class="p-3 border-top border-secondary border-opacity-25">
+        @if (auth.isImpersonating()) {
+          <button class="btn btn-sm btn-outline-warning w-100 mb-2" (click)="auth.exitImpersonation()">
+            ← Back to Superadmin
+          </button>
+        }
         <div class="d-flex align-items-center gap-2 mb-2">
           <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white"
                style="width:32px;height:32px;font-size:0.8rem;flex-shrink:0">
@@ -98,20 +109,24 @@ export class SidebarComponent {
 
   sectionLabel = computed(() => {
     const role = this.auth.role;
+    if (role === 'superadmin') return 'Super Admin';
     if (role === 'admin') return 'Academy Admin';
     if (role === 'coach') return 'Coaching';
-    if (role === 'player') return 'My Space';
     return '';
   });
 
   navItems = computed<NavItem[]>(() => {
     const role = this.auth.role;
+    if (role === 'superadmin') return SUPERADMIN_NAV;
     if (role === 'admin') return ADMIN_NAV;
     if (role === 'coach') return COACH_NAV;
-    if (role === 'player') return PLAYER_NAV;
     return [];
   });
 }
+
+const SUPERADMIN_NAV: NavItem[] = [
+  { label: 'Platform Overview', icon: 'bi-speedometer2', route: '/superadmin/dashboard' },
+];
 
 const ADMIN_NAV: NavItem[] = [
   { label: 'Dashboard', icon: 'bi-speedometer2', route: '/admin/dashboard' },
@@ -119,7 +134,6 @@ const ADMIN_NAV: NavItem[] = [
   { label: 'IDP Management', icon: 'bi-person-lines-fill', route: '/admin/idp' },
   { label: 'Session Plans', icon: 'bi-clipboard2-fill', route: '/admin/sessions' },
   { label: 'Weekly Schedule', icon: 'bi-calendar3', route: '/admin/planning' },
-
   { label: 'Club Methodology', icon: 'bi-book-half', route: '/admin/methodology' },
   { label: 'Settings', icon: 'bi-gear-fill', route: '/admin/settings' },
 ];
@@ -130,11 +144,4 @@ const COACH_NAV: NavItem[] = [
   { label: 'Session Plans', icon: 'bi-clipboard2-fill', route: '/coach/sessions' },
   { label: 'IDP', icon: 'bi-person-lines-fill', route: '/coach/idp' },
   { label: 'Club Methodology', icon: 'bi-book-half', route: '/coach/methodology' },
-];
-
-const PLAYER_NAV: NavItem[] = [
-  { label: 'Dashboard', icon: 'bi-speedometer2', route: '/player/dashboard' },
-  { label: 'My IDP', icon: 'bi-person-lines-fill', route: '/player/idp' },
-  { label: 'Daily Check-in', icon: 'bi-check2-circle', route: '/player/checkin' },
-  { label: 'My Goals', icon: 'bi-trophy-fill', route: '/player/goals' },
 ];

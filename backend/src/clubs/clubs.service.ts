@@ -8,6 +8,10 @@ import { UpdateClubSettingsDto } from './dto/update-club-settings.dto';
 export class ClubsService {
   constructor(@InjectRepository(Club) private repo: Repository<Club>) {}
 
+  async findAll(): Promise<Club[]> {
+    return this.repo.find({ where: { isActive: true }, order: { createdAt: 'ASC' } });
+  }
+
   async getSettings(clubId: string): Promise<ClubSettings> {
     const club = await this.repo.findOne({ where: { id: clubId } });
     if (!club) throw new NotFoundException('Club not found');

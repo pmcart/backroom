@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, roleGuard } from './core/auth/auth.guard';
+import { authGuard, roleGuard, superadminGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -8,6 +8,22 @@ export const routes: Routes = [
     path: 'login',
     loadComponent: () =>
       import('./features/auth/login/login.component').then((m) => m.LoginComponent),
+  },
+
+  // ─── Superadmin ────────────────────────────────────────────────────────────
+  {
+    path: 'superadmin',
+    loadComponent: () => import('./layout/shell/shell.component').then((m) => m.ShellComponent),
+    canActivate: [authGuard, superadminGuard],
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./features/superadmin/dashboard/superadmin-dashboard.component').then((m) => m.SuperadminDashboardComponent),
+        data: { title: 'Platform Overview' },
+      },
+    ],
   },
 
   // ─── Admin ─────────────────────────────────────────────────────────────────
@@ -48,7 +64,6 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/planning/planning').then((m) => m.Planning),
         data: { title: 'Weekly Schedule' },
       },
-
       {
         path: 'settings',
         loadComponent: () => import('./features/admin/settings/settings').then((m) => m.Settings),
@@ -91,50 +106,9 @@ export const routes: Routes = [
         data: { title: 'IDP' },
       },
       {
-        path: 'wellness',
-        loadComponent: () => import('./features/coach/wellness/wellness').then((m) => m.Wellness),
-        data: { title: 'Wellness Data' },
-      },
-      {
-        path: 'education',
-        loadComponent: () => import('./features/coach/education/education').then((m) => m.Education),
-        data: { title: 'Education' },
-      },
-      {
         path: 'methodology',
         loadComponent: () => import('./features/coach/methodology/methodology').then((m) => m.Methodology),
         data: { title: 'Club Methodology' },
-      },
-    ],
-  },
-
-  // ─── Player ────────────────────────────────────────────────────────────────
-  {
-    path: 'player',
-    loadComponent: () => import('./layout/shell/shell.component').then((m) => m.ShellComponent),
-    canActivate: [authGuard, roleGuard(['player'])],
-    children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      {
-        path: 'dashboard',
-        loadComponent: () =>
-          import('./features/player/dashboard/player-dashboard.component').then((m) => m.PlayerDashboardComponent),
-        data: { title: 'Dashboard' },
-      },
-      {
-        path: 'idp',
-        loadComponent: () => import('./features/player/idp/player-idp').then((m) => m.PlayerIdp),
-        data: { title: 'My IDP' },
-      },
-      {
-        path: 'checkin',
-        loadComponent: () => import('./features/player/checkin/checkin').then((m) => m.Checkin),
-        data: { title: 'Daily Check-in' },
-      },
-      {
-        path: 'goals',
-        loadComponent: () => import('./features/player/goals/goals').then((m) => m.Goals),
-        data: { title: 'My Goals' },
       },
     ],
   },

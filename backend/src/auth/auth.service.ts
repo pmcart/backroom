@@ -26,6 +26,9 @@ export class AuthService {
     if (!passwordMatch) {
       throw new UnauthorizedException('Invalid credentials');
     }
+    if (user.role === 'player') {
+      throw new UnauthorizedException('Player access is currently disabled. Please contact your club admin.');
+    }
     return this.buildAuthResponse(user);
   }
 

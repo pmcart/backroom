@@ -69,7 +69,8 @@ export class LoginComponent {
     this.authService.login(email, password).subscribe({
       next: (res) => {
         this.loading.set(false);
-        this.router.navigate([`/${res.user.role}/dashboard`]);
+        const route = res.user.role === 'superadmin' ? '/superadmin/dashboard' : `/${res.user.role}/dashboard`;
+        this.router.navigate([route]);
       },
       error: (err) => {
         this.loading.set(false);
