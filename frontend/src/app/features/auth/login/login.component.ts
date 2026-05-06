@@ -10,8 +10,9 @@ import { AuthService } from '../../../core/auth/auth.service';
   template: `
     <div class="auth-wrapper">
       <div class="auth-card">
-        <div class="auth-logo mb-1">Backroom</div>
-        <p class="text-muted mb-4" style="font-size:0.875rem">Academy management platform</p>
+        <div style="width:260px; overflow:hidden; margin:0 auto 4px;">
+          <img src="/img/backroom-logo.png" alt="Backroom" style="width:100%; display:block;" />
+        </div>
 
         @if (error()) {
           <div class="alert alert-danger py-2 small">{{ error() }}</div>

@@ -18,10 +18,8 @@ interface NavItem {
     <nav class="sidebar d-flex flex-column" [class.sidebar-mobile-open]="menu.isOpen()">
       <div class="sidebar-brand">
         @if (auth.isSuperadmin()) {
-          <div class="club-logo-badge" style="background:#1e293b; font-size:0.7rem;">SA</div>
-          <div class="club-brand-text">
-            <div class="club-brand-name">Backroom</div>
-            <div class="club-brand-sub">Super Admin</div>
+          <div style="display:flex; flex-direction:column; gap:4px; width:100%;">
+            <img src="/img/backroom-logo.png" alt="Backroom" style="width:130px; height:auto; margin:0 auto; filter:brightness(0) invert(1);" />
           </div>
         } @else if (clubName()) {
           <div class="club-logo-badge" [style.background]="clubColor()">{{ clubInitials() }}</div>
@@ -30,7 +28,7 @@ interface NavItem {
             <div class="club-brand-sub">{{ clubName() }} Academy</div>
           </div>
         } @else {
-          <span class="club-brand-name">Backroom</span>
+          <img src="/img/backroom-logo.png" alt="Backroom" style="width:130px; height:auto; margin:0 auto; filter:brightness(0) invert(1);" />
         }
       </div>
 

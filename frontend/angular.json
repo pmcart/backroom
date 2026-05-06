@@ -49,6 +49,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/img",
+                "output": "img"
               }
             ],
             "styles": [
