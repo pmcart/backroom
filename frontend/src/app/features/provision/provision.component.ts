@@ -1,8 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 
-type Step = 'lock' | 'form' | 'success';
+type Step = 'form' | 'success';
 
 interface CreatedAdmin {
   id: string;
@@ -23,43 +24,8 @@ interface ProvisionResult {
   standalone: true,
   imports: [ReactiveFormsModule],
   template: `
-    <div class="provision-wrapper">
-      <div class="provision-card">
-
-        <!-- ── Header ──────────────────────────────────────────────── -->
-        <div class="pcard-header">
-          <div class="pcard-logo">Backroom</div>
-          <div class="pcard-subtitle">Organisation Setup</div>
-        </div>
-
-        <!-- ── Step: Lock ─────────────────────────────────────────── -->
-        @if (step() === 'lock') {
-          <div class="pcard-body">
-            <div class="lock-icon">🔒</div>
-            <h2 class="lock-title">Provision Access</h2>
-            <p class="lock-desc">Enter the provision key to set up a new organisation.</p>
-
-            @if (lockError()) {
-              <div class="alert-error">{{ lockError() }}</div>
-            }
-
-            <form [formGroup]="lockForm" (ngSubmit)="unlock()">
-              <div class="field-group">
-                <label class="field-label">Provision Key</label>
-                <input
-                  type="password"
-                  class="field-input"
-                  formControlName="key"
-                  placeholder="Enter provision key"
-                  autocomplete="off"
-                />
-              </div>
-              <button type="submit" class="btn-primary w-full mt-4" [disabled]="lockForm.invalid">
-                Unlock
-              </button>
-            </form>
-          </div>
-        }
+    <div class="prov-page">
+      <div class="prov-card">
 
         <!-- ── Step: Form ─────────────────────────────────────────── -->
         @if (step() === 'form') {
@@ -72,7 +38,6 @@ interface ProvisionResult {
 
             <form [formGroup]="orgForm" (ngSubmit)="submit()">
 
-              <!-- Organisation details -->
               <div class="section-label">Organisation Details</div>
               <div class="field-group">
                 <label class="field-label">Name <span class="req">*</span></label>
@@ -82,8 +47,6 @@ interface ProvisionResult {
                 }
               </div>
 
-
-              <!-- Admins -->
               <div class="admins-header">
                 <div class="section-label mb-0">Admin Users</div>
                 <button type="button" class="btn-add" (click)="addAdmin()">+ Add Admin</button>
@@ -126,7 +89,7 @@ interface ProvisionResult {
               </div>
 
               <div class="form-actions">
-                <button type="button" class="btn-ghost" (click)="step.set('lock')">Back</button>
+                <button type="button" class="btn-ghost" (click)="router.navigate(['/superadmin/dashboard'])">Cancel</button>
                 <button type="submit" class="btn-primary" [disabled]="loading()">
                   @if (loading()) {
                     <span class="spinner"></span>
@@ -175,9 +138,10 @@ interface ProvisionResult {
               </div>
             }
 
-            <button class="btn-primary w-full mt-4" (click)="reset()">
-              Provision Another
-            </button>
+            <div class="form-actions">
+              <button class="btn-ghost" (click)="router.navigate(['/superadmin/dashboard'])">Back to Overview</button>
+              <button class="btn-primary" (click)="reset()">Provision Another</button>
+            </div>
           </div>
         }
 
@@ -185,61 +149,20 @@ interface ProvisionResult {
     </div>
   `,
   styles: [`
-    .provision-wrapper {
-      min-height: 100vh;
-      background: #0f172a;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
+    .prov-page {
+      padding: 28px 32px;
     }
-    .provision-card {
+    .prov-card {
       width: 100%;
-      max-width: 540px;
-      background: #1e293b;
-      border-radius: 16px;
+      max-width: 600px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
       overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-    }
-    .pcard-header {
-      background: #4f46e5;
-      padding: 24px 32px;
-      text-align: center;
-    }
-    .pcard-logo {
-      font-size: 22px;
-      font-weight: 800;
-      color: white;
-      letter-spacing: -0.5px;
-    }
-    .pcard-subtitle {
-      font-size: 12px;
-      color: rgba(255,255,255,0.7);
-      margin-top: 2px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
     }
     .pcard-body {
       padding: 28px 32px 32px;
-    }
-    /* Lock step */
-    .lock-icon {
-      font-size: 36px;
-      text-align: center;
-      margin-bottom: 8px;
-    }
-    .lock-title {
-      font-size: 20px;
-      font-weight: 700;
-      color: #f1f5f9;
-      text-align: center;
-      margin: 0 0 8px;
-    }
-    .lock-desc {
-      font-size: 13px;
-      color: #94a3b8;
-      text-align: center;
-      margin: 0 0 24px;
     }
     /* Fields */
     .field-group {
@@ -257,20 +180,21 @@ interface ProvisionResult {
     .req { color: #f87171; }
     .field-input {
       width: 100%;
-      background: #0f172a;
-      border: 1px solid #334155;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
       border-radius: 7px;
       padding: 9px 12px;
       font-size: 14px;
-      color: #f1f5f9;
+      color: #1e293b;
       box-sizing: border-box;
       transition: border-color 0.15s;
     }
     .field-input:focus {
       outline: none;
       border-color: #6366f1;
+      background: #fff;
     }
-    .field-input::placeholder { color: #475569; }
+    .field-input::placeholder { color: #94a3b8; }
     .font-mono { font-family: 'Courier New', monospace; }
     .field-error {
       font-size: 11px;
@@ -342,7 +266,7 @@ interface ProvisionResult {
     .section-heading {
       font-size: 18px;
       font-weight: 700;
-      color: #f1f5f9;
+      color: #1e293b;
       margin: 0 0 20px;
     }
     .section-label {
@@ -362,8 +286,8 @@ interface ProvisionResult {
       margin-top: 8px;
     }
     .admin-card {
-      background: #0f172a;
-      border: 1px solid #334155;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
       border-radius: 10px;
       padding: 16px;
       margin-bottom: 12px;
@@ -387,7 +311,7 @@ interface ProvisionResult {
       align-items: center;
       margin-top: 24px;
       padding-top: 16px;
-      border-top: 1px solid #334155;
+      border-top: 1px solid #e2e8f0;
     }
     /* Success */
     .success-banner {
@@ -443,8 +367,8 @@ interface ProvisionResult {
     }
     .warning-box strong { display: block; margin-bottom: 3px; }
     .cred-card {
-      background: #0f172a;
-      border: 1px solid #334155;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
       border-radius: 10px;
       padding: 14px 16px;
       margin-bottom: 10px;
@@ -458,7 +382,7 @@ interface ProvisionResult {
     .cred-name {
       font-size: 14px;
       font-weight: 700;
-      color: #f1f5f9;
+      color: #1e293b;
     }
     .badge-sent {
       font-size: 11px;
@@ -481,7 +405,7 @@ interface ProvisionResult {
       justify-content: space-between;
       align-items: center;
       padding: 5px 0;
-      border-bottom: 1px solid #1e293b;
+      border-bottom: 1px solid #e2e8f0;
     }
     .cred-row:last-child { border-bottom: none; }
     .cred-label {
@@ -529,18 +453,12 @@ interface ProvisionResult {
 export class ProvisionComponent {
   private fb   = inject(FormBuilder);
   private http = inject(HttpClient);
+  router = inject(Router);
 
-  step     = signal<Step>('lock');
-  loading  = signal(false);
-  lockError = signal<string | null>(null);
+  step      = signal<Step>('form');
+  loading   = signal(false);
   formError = signal<string | null>(null);
-  result   = signal<ProvisionResult | null>(null);
-
-  private storedKey = '';
-
-  lockForm = this.fb.nonNullable.group({
-    key: ['', Validators.required],
-  });
+  result    = signal<ProvisionResult | null>(null);
 
   orgForm = this.fb.nonNullable.group({
     name: ['', Validators.required],
@@ -567,13 +485,6 @@ export class ProvisionComponent {
     this.adminsArray.removeAt(i);
   }
 
-  unlock() {
-    if (this.lockForm.invalid) return;
-    this.storedKey = this.lockForm.getRawValue().key;
-    this.lockError.set(null);
-    this.step.set('form');
-  }
-
   submit() {
     if (this.orgForm.invalid) {
       this.orgForm.markAllAsTouched();
@@ -585,8 +496,7 @@ export class ProvisionComponent {
 
     const { name, admins } = this.orgForm.getRawValue();
 
-    this.http.post<ProvisionResult>('/api/provision', {
-      provisionKey: this.storedKey,
+    this.http.post<ProvisionResult>('/api/superadmin/provision', {
       organization: { name },
       admins,
     }).subscribe({
@@ -598,11 +508,7 @@ export class ProvisionComponent {
       error: (err) => {
         this.loading.set(false);
         const msg = err?.error?.message;
-        if (err.status === 401) {
-          this.formError.set('Invalid provision key. Go back and re-enter it.');
-        } else {
-          this.formError.set(Array.isArray(msg) ? msg.join(', ') : (msg ?? 'Something went wrong'));
-        }
+        this.formError.set(Array.isArray(msg) ? msg.join(', ') : (msg ?? 'Something went wrong'));
       },
     });
   }
@@ -611,8 +517,6 @@ export class ProvisionComponent {
     this.orgForm.reset();
     while (this.adminsArray.length > 1) this.adminsArray.removeAt(1);
     this.result.set(null);
-    this.storedKey = '';
-    this.lockForm.reset();
-    this.step.set('lock');
+    this.step.set('form');
   }
 }

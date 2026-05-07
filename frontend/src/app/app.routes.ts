@@ -23,6 +23,12 @@ export const routes: Routes = [
           import('./features/superadmin/dashboard/superadmin-dashboard.component').then((m) => m.SuperadminDashboardComponent),
         data: { title: 'Platform Overview' },
       },
+      {
+        path: 'provision',
+        loadComponent: () =>
+          import('./features/provision/provision.component').then((m) => m.ProvisionComponent),
+        data: { title: 'Provision Organisation' },
+      },
     ],
   },
 
@@ -111,13 +117,6 @@ export const routes: Routes = [
         data: { title: 'Club Methodology' },
       },
     ],
-  },
-
-  // ─── Hidden: Organisation provisioning (no nav link, key-protected) ──────
-  {
-    path: 'provision',
-    loadComponent: () =>
-      import('./features/provision/provision.component').then((m) => m.ProvisionComponent),
   },
 
   { path: '**', redirectTo: 'login' },

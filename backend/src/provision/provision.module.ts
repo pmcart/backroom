@@ -10,5 +10,6 @@ import { ProvisionService } from './provision.service';
   imports: [TypeOrmModule.forFeature([Club, User])],
   controllers: [ProvisionController],
   providers: [ProvisionService, ProvisionEmailService],
+  exports: [ProvisionService],
 })
 export class ProvisionModule {}

@@ -124,6 +124,7 @@ export class SidebarComponent {
 
 const SUPERADMIN_NAV: NavItem[] = [
   { label: 'Platform Overview', icon: 'bi-speedometer2', route: '/superadmin/dashboard' },
+  { label: 'Provision Organisation', icon: 'bi-plus-circle-fill', route: '/superadmin/provision' },
 ];
 
 const ADMIN_NAV: NavItem[] = [

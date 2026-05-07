@@ -25,7 +25,10 @@ export class ProvisionService {
     if (!secret || dto.provisionKey !== secret) {
       throw new UnauthorizedException('Invalid provision key');
     }
+    return this.createOrganization(dto);
+  }
 
+  async createOrganization(dto: { organization: { name: string }; admins: { firstName: string; lastName: string; email: string }[] }) {
     const slug = dto.organization.name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')

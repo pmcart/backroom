@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Club } from '../clubs/entities/club.entity';
 import { User } from '../users/entities/user.entity';
 import { Squad } from '../squads/entities/squad.entity';
+import { ProvisionModule } from '../provision/provision.module';
 import { SuperadminController } from './superadmin.controller';
 import { SuperadminService } from './superadmin.service';
 
@@ -18,6 +19,7 @@ import { SuperadminService } from './superadmin.service';
         signOptions: { expiresIn: '7d' as const },
       }),
     }),
+    ProvisionModule,
   ],
   controllers: [SuperadminController],
   providers: [SuperadminService],
